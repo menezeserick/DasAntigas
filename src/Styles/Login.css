@@ -1,0 +1,87 @@
+:root {
+    --color-bg: #0D0D0D; /* Cor de fundo */
+    --color-text-light: #F2F2F2; /* Texto claro */
+    --color-text-medium: #A6A6A6; /* Texto médio */
+    --color-text-dark: #262626; /* Texto escuro */
+    --color-border: transparent; /* Borda transparente */
+    --color-button: #F2F2F2; /* Cor do botão */
+    --color-button-hover: #A6A6A6; /* Cor do botão ao passar o mouse */
+    --box-shadow: rgba(0, 0, 0, 0.3); /* Sombra */
+  }
+  
+  /* Removendo margens e preenchimentos do body */
+  body {
+    margin: 0; /* Remove a margem padrão */
+    padding: 0; /* Remove o preenchimento padrão */
+  }
+  
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Altura total da tela */
+    background: linear-gradient(135deg, #1a1a1a, #0D0D0D); /* Gradiente de fundo */
+  }
+  
+  .login-form {
+    width: 100%; /* Largura total do formulário */
+    max-width: 400px; /* Largura máxima */
+    padding: 20px;
+    background-color: rgba(38, 38, 38, 0.9); /* Fundo do formulário */
+    border-radius: 10px;
+    box-shadow: 0 4px 20px var(--box-shadow);
+    text-align: center;
+  }
+  
+  .login-form h2 {
+    margin-bottom: 20px;
+    color: var(--color-text-light); /* Título em cor clara */
+    font-size: 24px; /* Tamanho da fonte do título */
+  }
+  
+  .login-form label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--color-text-medium); /* Cor dos rótulos */
+    text-align: left; /* Alinhamento à esquerda */
+  }
+  
+  .login-form input {
+    width: calc(100% - 20px); /* Largura total menos padding */
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--color-border); /* Borda dos campos de entrada */
+    border-radius: 5px; /* Bordas arredondadas */
+    background-color: #262626; /* Fundo dos campos de entrada */
+    color: var(--color-text-light); /* Cor do texto nos campos de entrada */
+    font-size: 14px; /* Tamanho da fonte menor */
+    transition: border-color 0.3s; /* Transição para a borda */
+  }
+  
+  .login-form input:focus {
+    outline: none;
+    border-color: var(--color-text-light); /* Cor da borda ao focar */
+  }
+  
+  .login-form button {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--color-button); /* Cor de fundo do botão */
+    color: var(--color-bg); /* Cor do texto do botão */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px; /* Tamanho da fonte do botão */
+    transition: background-color 0.3s, transform 0.2s; /* Transições suaves */
+  }
+  
+  .login-form button:hover {
+    background-color: var(--color-button-hover); /* Cor do botão ao passar o mouse */
+    transform: scale(1.05); /* Efeito de escala ao passar o mouse */
+  }
+  
+  .error-message {
+    color: red; /* Cor da mensagem de erro */
+    margin-top: 10px;
+  }
+  
