@@ -86,17 +86,26 @@ const Dashboard = () => {
 
     const handleAddService = async (e) => {
         e.preventDefault();
+    
         const serviceName = e.target.serviceName.value;
-
+        const servicePrice = parseFloat(e.target.servicePrice.value); 
+    
+        if (!serviceName || !servicePrice) {
+            console.error("Nome ou preço do serviço estão ausentes.");
+            return;
+        }   
         try {
-            await addDoc(collection(db, "services"), { name: serviceName });
-            setServices([...services, { name: serviceName }]);
+            await addDoc(collection(db, "services"), {
+                name: serviceName,
+                price: servicePrice,
+            });
+            setServices([...services, { name: serviceName, price: servicePrice }]);
             closeServiceModal();
         } catch (error) {
             console.error("Erro ao adicionar serviço: ", error);
         }
     };
-
+    
     useEffect(() => {
         const fetchData = async () => {
             try {

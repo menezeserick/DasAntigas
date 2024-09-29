@@ -2,9 +2,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #262626; /* Ilustração-4-hex */
+    background-color: #262626; 
     padding: 20px;
-    color: #F2F2F2; /* Ilustração-1-hex */
+    color: #F2F2F2; 
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -22,7 +22,7 @@
 .title {
     font-size: 24px;
     font-weight: bold;
-    color: #A6A6A6; /* Ilustração-2-hex */
+    color: #A6A6A6;
 }
 
 .header-actions {
@@ -31,8 +31,8 @@
 }
 
 .action-btn {
-    background-color: #737373; /* Ilustração-3-hex */
-    color: #F2F2F2; /* Ilustração-1-hex */
+    background-color: #737373;
+    color: #F2F2F2; 
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
@@ -41,5 +41,5 @@
 }
 
 .action-btn:hover {
-    background-color: #A6A6A6; /* Ilustração-2-hex */
+    background-color: #A6A6A6; 
 }

@@ -5,7 +5,7 @@ import 'moment/locale/pt-br';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../Styles/Calendario.css';
 import { db } from '../firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
 
 const localizer = momentLocalizer(moment.tz.setDefault("America/Sao_Paulo"));
 moment.locale('pt-br');
@@ -31,7 +31,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
     const calculateTotalPrice = useCallback(() => {
         const total = selectedServices.reduce((total, service) => total + (service.price * service.quantity), 0);
         setTotalPrice(total);
-    }, [selectedServices]); // Aqui incluímos selectedServices como dependência
+    }, [selectedServices]);
 
     const handleServiceChange = (serviceId) => {
         const service = services.find(s => s.id === serviceId);
@@ -39,9 +39,9 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             setSelectedServices((prev) => {
                 const existingService = prev.find(s => s.id === service.id);
                 if (existingService) {
-                    const updatedServices = prev.map(s => 
-                        s.id === service.id 
-                            ? { ...s, quantity: s.quantity + 1 } 
+                    const updatedServices = prev.map(s =>
+                        s.id === service.id
+                            ? { ...s, quantity: s.quantity + 1 }
                             : s
                     );
                     return updatedServices;
@@ -53,15 +53,31 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         }
     };
 
+    const handleAddCompletion = async (e) => {
+        e.preventDefault();
+        try {
+            await addDoc(collection(db, "vendas"), {
+                event: selectedEvent,
+                professional: selectedProfessional,
+                paymentMethod: selectedPaymentMethod,
+                services: selectedServices,
+                totalPrice,
+            });
+            onComplete(); 
+        } catch (error) {
+            console.error("Erro ao adicionar venda: ", error);
+        }
+    };
+
     const handleRemoveService = (serviceId) => {
         setSelectedServices((prev) => prev.filter(s => s.id !== serviceId));
     };
 
     const handleIncrementService = (serviceId) => {
         setSelectedServices((prev) => {
-            return prev.map(s => 
-                s.id === serviceId 
-                    ? { ...s, quantity: s.quantity + 1 } 
+            return prev.map(s =>
+                s.id === serviceId
+                    ? { ...s, quantity: s.quantity + 1 }
                     : s
             );
         });
@@ -69,77 +85,78 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
     const handleDecrementService = (serviceId) => {
         setSelectedServices((prev) => {
-            return prev.map(s => 
-                s.id === serviceId 
-                    ? { ...s, quantity: s.quantity > 1 ? s.quantity - 1 : 1 } 
+            return prev.map(s =>
+                s.id === serviceId
+                    ? { ...s, quantity: s.quantity > 1 ? s.quantity - 1 : 1 }
                     : s
             );
         });
     };
 
     useEffect(() => {
-        calculateTotalPrice(); // Chama a função de cálculo
-    }, [calculateTotalPrice]); // Inclui calculateTotalPrice como dependência
+        calculateTotalPrice();
+    }, [calculateTotalPrice]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const completionData = {
-            event: selectedEvent,
-            professional: selectedProfessional,
-            paymentMethod: selectedPaymentMethod,
-            services: selectedServices,
-            totalPrice,
-        };
-        onComplete(completionData);
+        handleAddCompletion(e);
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <label>Profissional:</label>
-            <select onChange={(e) => setSelectedProfessional(e.target.value)} required>
-                <option value="">Selecione um profissional</option>
-                {professionals.map(professional => (
-                    <option key={professional.id} value={professional.title}>{professional.title}</option>
-                ))}
-            </select>
+        <div className={`modal-overlay modal-overlay-open`}>
+            <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
+                <h2>Completar Venda</h2>
+                <form onSubmit={handleSubmit}>
+                    <label>Profissional:</label>
+                    <select onChange={(e) => setSelectedProfessional(e.target.value)} required>
+                        <option value="">Selecione um profissional</option>
+                        {professionals.map(professional => (
+                            <option key={professional.id} value={professional.title}>{professional.title}</option>
+                        ))}
+                    </select>
 
-            <label>Método de Pagamento:</label>
-            <select onChange={(e) => setSelectedPaymentMethod(e.target.value)} value={selectedPaymentMethod} required>
-                <option value="">Selecione um método</option>
-                {paymentMethods.map(method => (
-                    <option key={method.id} value={method.name}>{method.name}</option>
-                ))}
-            </select>
+                    <label>Método de Pagamento:</label>
+                    <select onChange={(e) => setSelectedPaymentMethod(e.target.value)} value={selectedPaymentMethod} required>
+                        <option value="">Selecione um método</option>
+                        {paymentMethods.map(method => (
+                            <option key={method.id} value={method.name}>{method.name}</option>
+                        ))}
+                    </select>
 
-            <label>Serviços:</label>
-            <select onChange={(e) => handleServiceChange(e.target.value)} required>
-                <option value="">Selecione um serviço</option>
-                {services.map(service => (
-                    <option key={service.id} value={service.id}>
-                        {service.name} - R$ {(service.price && service.price.toFixed(2)) || 'Preço não definido'}
-                    </option>
-                ))}
-            </select>
+                    <label>Serviços:</label>
+                    <select onChange={(e) => handleServiceChange(e.target.value)} required>
+                        <option value="">Selecione um serviço</option>
+                        {services.map(service => (
+                            <option key={service.id} value={service.id}>
+                                {service.name} - R$ {(service.price && service.price.toFixed(2)) || 'Preço não definido'}
+                            </option>
+                        ))}
+                    </select>
 
-            {/* Lista de serviços selecionados */}
-            <ul>
-                {selectedServices.map(service => (
-                    <li key={service.id}>
-                        {service.name} - R$ {service.price.toFixed(2)} x {service.quantity}
-                        <button type="button" onClick={() => handleDecrementService(service.id)}>-</button>
-                        <button type="button" onClick={() => handleIncrementService(service.id)}>+</button>
-                        <button type="button" onClick={() => handleRemoveService(service.id)}>Remover</button>
-                    </li>
-                ))}
-            </ul>
+                    <ul className="selected-services-list">
+                        {selectedServices.map(service => (
+                            <li key={service.id} className="service-item">
+                                <div className="service-info">
+                                    <span>{service.name} - R$ {service.price.toFixed(2)} x {service.quantity}</span>
+                                    <div className="service-controls">
+                                        <button type="button" className="decrement-btn" onClick={() => handleDecrementService(service.id)}>-</button>
+                                        <button type="button" className="increment-btn" onClick={() => handleIncrementService(service.id)}>+</button>
+                                        <button type="button" className="remove-btn" onClick={() => handleRemoveService(service.id)}>Remover</button>
+                                    </div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
 
-            <p>Total: R$ {totalPrice.toFixed(2)}</p>
-            <button type="submit">Finalizar Atendimento</button>
-            <button type="button" onClick={onCancel}>Fechar</button>
-        </form>
+                    <p className="total-price">Total: R$ {totalPrice.toFixed(2)}</p>
+
+                    <button type="submit">Finalizar Atendimento</button>
+                    <button type="button" onClick={onCancel}>Fechar</button>
+                </form>
+            </div>
+        </div>
     );
 };
-
 
 const Calendario = ({ events, professionals = [] }) => {
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -176,6 +193,7 @@ const Calendario = ({ events, professionals = [] }) => {
         fetchPaymentMethods();
         fetchServices();
     }, []);
+    
 
     const handleEventSelect = (event) => {
         setSelectedEvent(event);
@@ -184,7 +202,6 @@ const Calendario = ({ events, professionals = [] }) => {
 
     const handleComplete = (completionData) => {
         console.log("Venda concluída:", completionData);
-        // Aqui você pode salvar os dados no banco de dados se necessário
         setIsCompleting(false);
         setSelectedEvent(null);
     };
@@ -240,29 +257,23 @@ const Calendario = ({ events, professionals = [] }) => {
                     resourceAccessor="resourceId"
                     resourceIdAccessor="id"
                     resourceTitleAccessor="title"
-                    components={{
-                        resourceHeader: CustomResourceHeader
-                    }}
                     className="calendar"
                     onSelectEvent={handleEventSelect}
-                    onNavigate={handleNavigate}
+                    components={{
+                        resourceHeader: CustomResourceHeader,
+                    }}
                 />
             </div>
 
-            {isCompleting && selectedEvent && services.length > 0 && paymentMethods.length > 0 && professionals.length > 0 && (
-                <div className={`modal-overlay modal-overlay-open`} onClick={handleCancel}>
-                    <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
-                        <h2>Concluir Atendimento</h2>
-                        <CompletionForm
-                            selectedEvent={selectedEvent}
-                            professionals={professionals}
-                            paymentMethods={paymentMethods}
-                            services={services}
-                            onComplete={handleComplete}
-                            onCancel={handleCancel}
-                        />
-                    </div>
-                </div>
+            {isCompleting && (
+                <CompletionForm
+                    selectedEvent={selectedEvent}
+                    professionals={professionals}
+                    paymentMethods={paymentMethods}
+                    onComplete={handleComplete}
+                    onCancel={handleCancel}
+                    services={services}
+                />
             )}
         </div>
     );

@@ -1,16 +1,14 @@
-/* Calendário Diário */
 .daily-calendar {
-    width: calc(100% - 30%); /* Ocupa o restante da largura */
-    max-width: 100%; /* Remove a limitação de largura */
+    width: calc(100% - 30%); 
+    max-width: 100%;
     border-radius: 10px;
-    max-height: calc(100vh - 150px); /* Limita a altura para que não ultrapasse a altura da tela menos 100px */
+    max-height: calc(100vh - 150px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
-    overflow:hidden !important;/* Adiciona rolagem vertical */
+    overflow:hidden !important;
     height: 100%
 }
 
-/* Barra de ferramentas */
 .daily-calendar .rbc-toolbar {
     display: flex;
     justify-content: space-between;
@@ -18,10 +16,9 @@
     margin-bottom: 20px;
 }
 
-/* Botões da barra de ferramentas */
 .daily-calendar .rbc-toolbar button {
-    background-color: #737373; /* Cor de fundo */
-    color: #F2F2F2; /* Cor do texto */
+    background-color: #737373;
+    color: #F2F2F2;
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
@@ -30,28 +27,28 @@
 }
 
 .daily-calendar .rbc-toolbar button:hover {
-    background-color: #A6A6A6; /* Cor ao passar o mouse */
+    background-color: #A6A6A6;
 }
 
-/* Título da barra de ferramentas */
+
 .daily-calendar .rbc-toolbar-label {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #000000; /* Cor do título */
+    color: #000000; 
 }
 
-/* Células do cabeçalho de tempo */
+
 .daily-calendar .rbc-time-header-cell {
     font-weight: bold;
     text-align: center;
     padding: 10px 0;
-    color: #A6A6A6; /* Cor do texto */
+    color: #A6A6A6;
 }
 
-/* Eventos no calendário */
+
 .daily-calendar .rbc-event {
-    background-color: #A6A6A6; /* Cor de fundo do evento */
-    color: #F2F2F2; /* Cor do texto */
+    background-color: #A6A6A6; 
+    color: #F2F2F2; 
     border-radius: 4px;
     padding: 5px;
     font-size: 0.9rem;
@@ -59,29 +56,25 @@
 }
 
 .daily-calendar .rbc-event:hover {
-    background-color: #737373; /* Cor ao passar o mouse sobre o evento */
+    background-color: #737373;
 }
 
-/* Conteúdo dos eventos */
 .daily-calendar .rbc-event-content {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Data de hoje */
 .daily-calendar .rbc-today {
     background-color: transparent;
     border-radius: 4px;
 }
 
-/* Calendário Mensal */
 .monthly-calendar {
-    flex: 0 0 30%; /* Define a largura como 30% */
+    flex: 0 0 30%; 
     margin-right: 20px;
 }
 
-/* Header personalizado */
 .custom-resource-header {
     display: flex;
     justify-content: center;
@@ -90,12 +83,10 @@
     padding: 10px;
 }
 
-/* Remover células de dia inteiro */
 .rbc-allday-cell {
     display: none !important;
 }
 
-/* Ajustar slots de tempo */
 .rbc-time-slot {
     display: flex;
     align-items: center;
@@ -107,7 +98,6 @@
     text-align: center;
 }
 
-/* Gutter da visualização de tempo */
 .rbc-time-view-resources .rbc-time-gutter,
 .rbc-time-view-resources .rbc-time-header-gutter {
     position: sticky;
@@ -119,8 +109,8 @@
 }
 
 .rbc-time-view-resources{
-    height: calc(100vh - 100px); /* Ocupa a altura da tela toda menos o cabeçalho */
-    margin-bottom: 0; /* Remove margem inferior */
+    height: calc(100vh - 100px); 
+    margin-bottom: 0; 
 }
 
 .rbc-time-header.rbc-overflowing {
@@ -131,27 +121,25 @@
     min-height: initial;
 }
 
-/* Calendario.css */
-
 .edit-event-modal {
-    position: fixed; /* Fixa o modal na tela */
-    top: 0; /* Ajusta a posição superior */
-    left: 0; /* Ajusta a posição esquerda */
-    width: 100%; /* Largura total da tela */
-    height: 100%; /* Altura total da tela */
-    background-color: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
-    display: flex; /* Usar flexbox para centralizar */
-    justify-content: center; /* Centraliza horizontalmente */
-    align-items: center; /* Centraliza verticalmente */
-    z-index: 1000; /* Garante que o modal fique acima de outros elementos */
+    position: fixed;
+    top: 0;
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0, 0, 0, 0.5); 
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    z-index: 1000; 
 }
 
 .edit-event-form {
-    background: white; /* Fundo branco para o formulário */
-    padding: 20px; /* Espaçamento interno */
-    border-radius: 5px; /* Bordas arredondadas */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Sombra para o formulário */
-    width: 300px; /* Largura do formulário */
+    background: white; 
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); 
+    width: 300px; 
 }
 
 .modal-overlay {
@@ -170,4 +158,73 @@
 .modal-overlay-open {
     opacity: 1;
     visibility: visible;
+}
+
+/* Lista de serviços selecionados */
+.selected-services-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.service-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f7f7f7;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.service-info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+}
+
+.service-controls {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    background-color: #737373;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #5a5a5a;
+}
+
+.decrement-btn, .increment-btn {
+    background-color: #5cb85c;
+}
+
+.decrement-btn:hover, .increment-btn:hover {
+    background-color: #4cae4c;
+}
+
+.remove-btn {
+    background-color: #d9534f;
+}
+
+.remove-btn:hover {
+    background-color: #c9302c;
+}
+
+
+.total-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    text-align: right;
+    margin-top: 20px;
 }
