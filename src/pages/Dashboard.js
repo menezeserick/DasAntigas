@@ -5,7 +5,6 @@ import { db } from '../firebaseConfig';
 import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
 import Header from '../components/Header';
-
 const Dashboard = () => {
     const [events, setEvents] = useState([]);
     const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -15,6 +14,7 @@ const Dashboard = () => {
     const [services, setServices] = useState([]);
     const [paymentMethods] = useState([]);
     const [formData, setFormData] = useState({
+        clientName: '',  
         title: '',
         professional: '',
         date: '',
@@ -41,34 +41,36 @@ const Dashboard = () => {
         const [hours, minutes] = formData.time.split(":");
         const start = moment.tz(`${formData.date} ${hours}:${minutes}`, "YYYY-MM-DD HH:mm", "America/Sao_Paulo").toDate();
         const end = moment(start).add(30, 'minutes').toDate();
-
+    
         const professional = professionals.find(p => p.title === formData.professional);
         if (!professional) {
             console.error("Profissional não encontrado!");
             return;
         }
-
+    
         const newEvent = {
-            title: `${formData.title} - ${formData.professional}`,
+            title: `${formData.clientName} - ${formData.title}`,
             start: start,
             end: end,
             resourceId: professional.id
         };
-
+    
         try {
             await addDoc(collection(db, "schedules"), {
+                clientName: formData.clientName,  
                 service: formData.title,
                 professional: formData.professional,
                 date: formData.date,
                 time: formData.time
             });
-
+    
             setEvents((prevEvents) => [...prevEvents, newEvent]);
             closeModal();
         } catch (error) {
             console.error("Erro ao adicionar agendamento: ", error);
         }
     };
+    
 
     const handleAddProfessional = async (e) => {
         e.preventDefault();
@@ -105,7 +107,7 @@ const Dashboard = () => {
             console.error("Erro ao adicionar serviço: ", error);
         }
     };
-    
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -137,9 +139,9 @@ const Dashboard = () => {
                     const data = doc.data();
                     const start = moment.tz(`${data.date} ${data.time}`, "YYYY-MM-DD HH:mm", "America/Sao_Paulo").toDate();
                     const end = moment(start).add(30, 'minutes').toDate();
-
+    
                     return {
-                        title: `${data.service} - ${data.professional}`,
+                        title: `${data.clientName} - ${data.service}`,
                         start: start,
                         end: end,
                         resourceId: professionals.find(p => p.title === data.professional)?.id
@@ -150,7 +152,7 @@ const Dashboard = () => {
                 console.error("Erro ao buscar os dados: ", error);
             }
         };
-
+    
         fetchData();
     }, [professionals]);
 
@@ -186,6 +188,8 @@ const Dashboard = () => {
                     <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
                         <h2>Agendar Cliente</h2>
                         <form onSubmit={handleFormSubmit}>
+                            <label>Nome do Cliente:</label>
+                            <input type="text" name="clientName" onChange={handleInputChange} required /> {/* Campo Cliente */}
                             <label>Serviço:</label>
                             <select name="title" onChange={handleInputChange} required>
                                 <option value="">Selecione um serviço</option>
@@ -237,15 +241,14 @@ const Dashboard = () => {
                         <form onSubmit={handleAddService}>
                             <label>Nome do Serviço:</label>
                             <input type="text" name="serviceName" required />
-                            <label>Preço:</label>
-                            <input type="number" name="servicePrice" step="0.01" required />
+                            <label>Preço do Serviço:</label>
+                            <input type="number" step="0.01" name="servicePrice" required />
                             <button type="submit">Adicionar</button>
                             <button type="button" onClick={closeServiceModal}>Fechar</button>
                         </form>
                     </div>
                 </div>
             )}
-
         </div>
     );
 };

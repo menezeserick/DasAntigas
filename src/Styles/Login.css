@@ -55,6 +55,7 @@ body {
   color: var(--color-text-light);
   font-size: 14px;
   transition: border-color 0.3s;
+  border: 2px solid white;
 }
 
 .login-form input:focus {

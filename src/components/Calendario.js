@@ -5,7 +5,8 @@ import 'moment/locale/pt-br';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../Styles/Calendario.css';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+
 
 const localizer = momentLocalizer(moment.tz.setDefault("America/Sao_Paulo"));
 moment.locale('pt-br');
@@ -15,6 +16,55 @@ const CustomResourceHeader = ({ label }) => (
         {label}
     </div>
 );
+
+const DailySalesSummary = ({ selectedDate }) => {
+    const [sales, setSales] = useState([]);
+
+    useEffect(() => {
+        const fetchSales = async () => {
+            const startOfDay = new Date(selectedDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(selectedDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            try {
+                const salesQuery = query(
+                    collection(db, 'vendas'),
+                    where('event.start', '>=', startOfDay),
+                    where('event.start', '<=', endOfDay)
+                );
+                const snapshot = await getDocs(salesQuery);
+                const salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setSales(salesData);
+            } catch (error) {
+                console.error('Erro ao buscar vendas do dia:', error);
+            }
+        };
+
+        if (selectedDate) {
+            fetchSales();
+        }
+    }, [selectedDate]);
+
+    return (
+        <div className="sales-summary">
+            <h3>Resumo de Clientes do Dia</h3>
+            {sales.length > 0 ? (
+                <ul>
+                    {sales.map((sale) => (
+                        <li key={sale.id}>
+                            <strong>Cliente:</strong> {sale.event.title} <br /> 
+                            <strong>Profissional:</strong> {sale.professional} <br />
+                            <strong>Total:</strong> R$ {sale.totalPrice.toFixed(2)} <br />
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p>Nenhum cliente lançado para esta data.</p>
+            )}
+        </div>
+    );
+};
 
 const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComplete, onCancel, services }) => {
     const [selectedServices, setSelectedServices] = useState([]);
@@ -63,7 +113,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 services: selectedServices,
                 totalPrice,
             });
-            onComplete(); 
+            onComplete();
         } catch (error) {
             console.error("Erro ao adicionar venda: ", error);
         }
@@ -193,7 +243,7 @@ const Calendario = ({ events, professionals = [] }) => {
         fetchPaymentMethods();
         fetchServices();
     }, []);
-    
+
 
     const handleEventSelect = (event) => {
         setSelectedEvent(event);
@@ -223,7 +273,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     events={events}
                     startAccessor="start"
                     endAccessor="end"
-                    style={{ height: 400, marginBottom: '20px' }}
+                    style={{ height: 400, marginBottom: '20px', marginLeft: '10px' }}
                     step={30}
                     timeslots={1}
                     views={['month']}
@@ -237,6 +287,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     className="calendar"
                     onNavigate={handleNavigate}
                 />
+                <DailySalesSummary selectedDate={selectedDate} />
             </div>
 
             <div className="daily-calendar">
@@ -252,7 +303,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     defaultView="day"
                     date={selectedDate}
                     min={new Date(1970, 1, 1, 8, 0, 0)}
-                    max={new Date(1970, 1, 1, 20, 0, 0)}
+                    max={new Date(1970, 1, 1, 22, 0, 0)}
                     resources={professionals}
                     resourceAccessor="resourceId"
                     resourceIdAccessor="id"

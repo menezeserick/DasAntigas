@@ -1,11 +1,11 @@
 .daily-calendar {
-    width: calc(100% - 30%); 
+    width: calc(100% - 30%);
     max-width: 100%;
     border-radius: 10px;
     max-height: calc(100vh - 150px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
-    overflow:hidden !important;
+    overflow: hidden !important;
     height: 100%
 }
 
@@ -34,7 +34,7 @@
 .daily-calendar .rbc-toolbar-label {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #000000; 
+    color: #000000;
 }
 
 
@@ -47,8 +47,8 @@
 
 
 .daily-calendar .rbc-event {
-    background-color: #A6A6A6; 
-    color: #F2F2F2; 
+    background-color: #A6A6A6;
+    color: #F2F2F2;
     border-radius: 4px;
     padding: 5px;
     font-size: 0.9rem;
@@ -71,7 +71,7 @@
 }
 
 .monthly-calendar {
-    flex: 0 0 30%; 
+    flex: 0 0 30%;
     margin-right: 20px;
 }
 
@@ -108,38 +108,38 @@
     width: 76px;
 }
 
-.rbc-time-view-resources{
-    height: calc(100vh - 100px); 
-    margin-bottom: 0; 
+.rbc-time-view-resources {
+    height: calc(100vh - 100px);
+    margin-bottom: 0;
 }
 
 .rbc-time-header.rbc-overflowing {
-   border: none;
+    border: none;
 }
 
-.rbc-time-view{
+.rbc-time-view {
     min-height: initial;
 }
 
 .edit-event-modal {
     position: fixed;
     top: 0;
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    background-color: rgba(0, 0, 0, 0.5); 
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
-    justify-content: center; 
-    align-items: center; 
-    z-index: 1000; 
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 .edit-event-form {
-    background: white; 
+    background: white;
     padding: 20px;
     border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); 
-    width: 300px; 
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    width: 300px;
 }
 
 .modal-overlay {
@@ -160,7 +160,6 @@
     visibility: visible;
 }
 
-/* Lista de serviços selecionados */
 .selected-services-list {
     list-style-type: none;
     padding: 0;
@@ -227,4 +226,77 @@ button:hover {
     color: #333;
     text-align: right;
     margin-top: 20px;
+}
+
+.sales-summary {
+    background-color: #f7f7f7;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+    color: #333;
+    margin-top: 20px;
+    margin-left: 7px; 
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding-left: 10px;
+    
+}
+
+.sales-summary::-webkit-scrollbar {
+    display: none;
+}
+
+.sales-summary h3 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #737373;
+    margin-bottom: 20px;
+}
+
+.sales-summary ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sales-summary li {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.sales-summary li:last-child {
+    border-bottom: none;
+}
+
+.sales-summary strong {
+    font-weight: bold;
+    color: #5cb85c;
+}
+
+.sales-summary .service-list {
+    margin-left: 20px;
+    color: #555;
+}
+
+.sales-summary .service-list li {
+    margin-bottom: 5px;
+}
+
+.sales-summary .total-amount {
+    font-weight: bold;
+    color: #333;
+    margin-top: 10px;
+}
+
+.sales-summary p {
+    color: #999;
+    font-style: italic;
+}
+
+.sales-summary .no-sales {
+    text-align: center;
+    color: #737373;
+    font-size: 1.2rem;
 }
