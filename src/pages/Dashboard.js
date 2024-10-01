@@ -5,6 +5,8 @@ import { db } from '../firebaseConfig';
 import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
 import Header from '../components/Header';
+
+
 const Dashboard = () => {
     const [events, setEvents] = useState([]);
     const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -158,8 +160,9 @@ const Dashboard = () => {
 
     const generateTimeOptions = () => {
         const options = [];
-        for (let i = 0; i < 24; i++) {
+        for (let i = 8; i <= 20; i++) {
             for (let j = 0; j < 60; j += 30) {
+                if (i === 20 && j > 30) break;
                 const hours = String(i).padStart(2, '0');
                 const minutes = String(j).padStart(2, '0');
                 options.push(`${hours}:${minutes}`);
@@ -167,6 +170,7 @@ const Dashboard = () => {
         }
         return options;
     };
+    
 
     return (
         <div className="container">
@@ -189,7 +193,7 @@ const Dashboard = () => {
                         <h2>Agendar Cliente</h2>
                         <form onSubmit={handleFormSubmit}>
                             <label>Nome do Cliente:</label>
-                            <input type="text" name="clientName" onChange={handleInputChange} required /> {/* Campo Cliente */}
+                            <input type="text" name="clientName" onChange={handleInputChange} required /> 
                             <label>Serviço:</label>
                             <select name="title" onChange={handleInputChange} required>
                                 <option value="">Selecione um serviço</option>
