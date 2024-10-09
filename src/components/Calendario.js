@@ -5,7 +5,7 @@ import 'moment/locale/pt-br';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../Styles/Calendario.css';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where} from 'firebase/firestore';
 
 
 const localizer = momentLocalizer(moment.tz.setDefault("America/Sao_Paulo"));
@@ -53,7 +53,7 @@ const DailySalesSummary = ({ selectedDate }) => {
                 <ul>
                     {sales.map((sale) => (
                         <li key={sale.id}>
-                            <strong>Cliente:</strong> {sale.event.title} <br /> 
+                            <strong>Cliente:</strong> {sale.event.title} <br />
                             <strong>Profissional:</strong> {sale.professional} <br />
                             <strong>Total:</strong> R$ {sale.totalPrice.toFixed(2)} <br />
                         </li>
@@ -68,9 +68,9 @@ const DailySalesSummary = ({ selectedDate }) => {
 
 const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComplete, onCancel, services }) => {
     const [selectedServices, setSelectedServices] = useState([]);
-    const [selectedProfessional, setSelectedProfessional] = useState('');
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
     const [totalPrice, setTotalPrice] = useState(0);
+
 
     useEffect(() => {
         if (paymentMethods.length > 0) {
@@ -96,7 +96,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     );
                     return updatedServices;
                 } else {
-                    const newService = { ...service, quantity: 1 };
+                    const newService = { ...service, quantity: 1, selectedProfessional: '' }; // Adicionando campo para o profissional
                     return [...prev, newService];
                 }
             });
@@ -105,20 +105,21 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
     const handleAddCompletion = async (e) => {
         e.preventDefault();
+    
         try {
+            // 1. Adiciona a venda ao banco de dados
             await addDoc(collection(db, "vendas"), {
                 event: selectedEvent,
-                professional: selectedProfessional,
+                services: selectedServices, // O profissional está dentro de cada serviço
                 paymentMethod: selectedPaymentMethod,
-                services: selectedServices,
                 totalPrice,
             });
-            onComplete();
+            onComplete(); // Finaliza a venda
         } catch (error) {
             console.error("Erro ao adicionar venda: ", error);
         }
     };
-
+    
     const handleRemoveService = (serviceId) => {
         setSelectedServices((prev) => prev.filter(s => s.id !== serviceId));
     };
@@ -143,6 +144,16 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         });
     };
 
+    const handleProfessionalChange = (serviceId, professionalId) => {
+        setSelectedServices((prev) =>
+            prev.map(s =>
+                s.id === serviceId
+                    ? { ...s, selectedProfessional: professionalId } // Atualiza o profissional do serviço específico
+                    : s
+            )
+        );
+    };
+
     useEffect(() => {
         calculateTotalPrice();
     }, [calculateTotalPrice]);
@@ -157,14 +168,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
                 <h2>Completar Venda</h2>
                 <form onSubmit={handleSubmit}>
-                    <label>Profissional:</label>
-                    <select onChange={(e) => setSelectedProfessional(e.target.value)} required>
-                        <option value="">Selecione um profissional</option>
-                        {professionals.map(professional => (
-                            <option key={professional.id} value={professional.title}>{professional.title}</option>
-                        ))}
-                    </select>
-
                     <label>Método de Pagamento:</label>
                     <select onChange={(e) => setSelectedPaymentMethod(e.target.value)} value={selectedPaymentMethod} required>
                         <option value="">Selecione um método</option>
@@ -188,6 +191,19 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                             <li key={service.id} className="service-item">
                                 <div className="service-info">
                                     <span>{service.name} - R$ {service.price.toFixed(2)} x {service.quantity}</span>
+
+                                    <label>Profissional:</label>
+                                    <select
+                                        onChange={(e) => handleProfessionalChange(service.id, e.target.value)}
+                                        value={service.selectedProfessional}
+                                        required
+                                    >
+                                        <option value="">Selecione um profissional</option>
+                                        {professionals.map(professional => (
+                                            <option key={professional.id} value={professional.title}>{professional.title}</option>
+                                        ))}
+                                    </select>
+
                                     <div className="service-controls">
                                         <button type="button" className="decrement-btn" onClick={() => handleDecrementService(service.id)}>-</button>
                                         <button type="button" className="increment-btn" onClick={() => handleIncrementService(service.id)}>+</button>

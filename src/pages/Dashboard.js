@@ -6,15 +6,18 @@ import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
 import Header from '../components/Header';
 
-
 const Dashboard = () => {
     const [events, setEvents] = useState([]);
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [modalProfessionalOpen, setModalProfessionalOpen] = useState(false);
     const [modalServiceOpen, setModalServiceOpen] = useState(false);
+    // eslint-disable-next-line
+    const [modalRegisterOpen, setModalRegisterOpen] = useState(false);
+    const [modalRegisterBoxOpen, setModalRegisterBoxOpen] = useState(false); // Adicionando o estado para o modal de caixa
     const [professionals, setProfessionals] = useState([]);
     const [services, setServices] = useState([]);
     const [paymentMethods] = useState([]);
+    const [professionalBalances, setProfessionalBalances] = useState([]);
     const [formData, setFormData] = useState({
         clientName: '',  
         title: '',
@@ -23,13 +26,73 @@ const Dashboard = () => {
         time: ''
     });
 
+    // Funções para abrir e fechar o modal de caixa
+    const openRegisterBoxModal = () => setModalRegisterBoxOpen(true);
+    // eslint-disable-next-line
+    const closeRegisterBoxModal = () => setModalRegisterBoxOpen(false);
+
     const openModal = () => setModalIsOpen(true);
     const closeModal = () => setModalIsOpen(false);
     const openProfessionalModal = () => setModalProfessionalOpen(true);
     const closeProfessionalModal = () => setModalProfessionalOpen(false);
     const openServiceModal = () => setModalServiceOpen(true);
+    // eslint-disable-next-line
     const closeServiceModal = () => setModalServiceOpen(false);
+    // eslint-disable-next-line
+    const openRegisterModal = () => setModalRegisterOpen(true);
+    // eslint-disable-next-line
+    const closeRegisterModal = () => setModalRegisterOpen(false);
 
+    // Função que será chamada ao abrir o caixa
+    const handleOpenBox = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, "vendas"));
+            const professionalBalances = {};
+    
+            // Log de profissionais
+            const professionalsSnapshot = await getDocs(collection(db, "professionals"));
+            const professionalsNames = professionalsSnapshot.docs.map(doc => doc.data().name);
+            console.log("Profissionais disponíveis:", professionalsNames); // Log dos nomes dos profissionais
+    
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                const professionalName = data.selectedProfessional; // Nome do profissional
+                const totalPrice = parseFloat(data.totalPrice); // Usa o totalPrice diretamente
+    
+                // Verifica se o totalPrice e o professionalName são válidos
+                if (!isNaN(totalPrice) && professionalName) {
+                    // Normaliza o nome do profissional
+                    const normalizedProfessionalName = professionalName.trim();
+    
+                    if (!professionalBalances[normalizedProfessionalName]) {
+                        professionalBalances[normalizedProfessionalName] = 0; // Inicializa se não existir
+                    }
+                    professionalBalances[normalizedProfessionalName] += totalPrice; // Atualiza o saldo
+                } else {
+                    // Mensagem detalhada de erro
+                    if (isNaN(totalPrice)) {
+                        console.warn(`Preço total inválido: ${data.totalPrice} (ID da venda: ${doc.id})`);
+                    }
+                    if (!professionalName) {
+                        console.warn(`Profissional não encontrado para a venda: ${data.totalPrice} (ID da venda: ${doc.id})`);
+                    }
+                }
+            });
+    
+            // Converte o objeto para um array
+            const balancesList = Object.keys(professionalBalances).map(name => ({
+                name: name,
+                balance: professionalBalances[name]
+            }));
+    
+            setProfessionalBalances(balancesList);
+        } catch (error) {
+            console.error("Erro ao abrir o caixa: ", error);
+        }
+    };
+    
+    
+    
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({
@@ -133,6 +196,7 @@ const Dashboard = () => {
         fetchData();
     }, []);
 
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -170,7 +234,6 @@ const Dashboard = () => {
         }
         return options;
     };
-    
 
     return (
         <div className="container">
@@ -178,6 +241,7 @@ const Dashboard = () => {
                 openScheduleModal={openModal}
                 openProfessionalModal={openProfessionalModal}
                 openServiceModal={openServiceModal}
+                openRegisterBoxModal={openRegisterBoxModal}
             />
 
             <Calendario
@@ -250,6 +314,19 @@ const Dashboard = () => {
                             <button type="submit">Adicionar</button>
                             <button type="button" onClick={closeServiceModal}>Fechar</button>
                         </form>
+                    </div>
+                </div>
+            )}
+            {modalRegisterBoxOpen && (
+                <div className={`modal-overlay modal-overlay-open`} onClick={handleOpenBox}>
+                    <div className="modal modal-open large-modal" onClick={(e) => e.stopPropagation()}>
+                        <h2>Caixa</h2>
+                        {professionalBalances.map((prof, index) => (
+                            <div key={index}>
+                                <span>{prof.name}: </span>
+                                <span>R$ {prof.balance.toFixed(2)}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
