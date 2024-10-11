@@ -300,3 +300,18 @@ button:hover {
     color: #737373;
     font-size: 1.2rem;
 }
+
+
+/* Calendário mensal no modo responsivo */
+@media (max-width: 768px) {
+    .monthly-calendar {
+        display: block;
+        width: 100%;
+        margin: 0;
+    }
+
+    .daily-calendar {
+        display: none; /* Esconde o calendário diário */
+    }
+}
+

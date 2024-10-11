@@ -6,11 +6,13 @@
     padding: 20px;
     color: #F2F2F2; 
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    flex-wrap: wrap; /* Permite quebrar as linhas em telas menores */
 }
 
 .logo-container {
     display: flex;
     align-items: center;
+    margin-bottom: 10px; /* Espaçamento para responsividade */
 }
 
 .logo {
@@ -28,6 +30,8 @@
 .header-actions {
     display: flex;
     gap: 15px;
+    flex-wrap: wrap; /* Permite quebrar os botões em várias linhas em telas pequenas */
+    justify-content: center; /* Centraliza os botões em telas menores */
 }
 
 .action-btn {
@@ -42,4 +46,27 @@
 
 .action-btn:hover {
     background-color: #575757; 
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+    body{
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .dashboard-header {
+        flex-direction: column; /* Empilha os elementos verticalmente */
+        align-items: flex-start; /* Alinha ao início para telas pequenas */
+    }
+
+    .header-actions {
+        width: 100%;
+        gap: 10px;
+        justify-content: space-between;
+    }
+
+    .action-btn {
+        width: 100%; /* Botões ocupam a largura total em telas pequenas */
+        text-align: center;
+    }
 }

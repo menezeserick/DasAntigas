@@ -1,25 +1,27 @@
-body{
+body {
   overflow: hidden;
 }
+
 .modal {
-  position: absolute;
-  top: 20%;
+  position: fixed; /* Fixado para centralizar na tela */
+  top: 50%;
   left: 50%;
-  transform: translate(-50%, -20%);
+  transform: translate(-50%, -50%); /* Centraliza o modal */
   background-color: #A6A6A6; 
   padding: 20px;
   border-radius: 8px;
-  width: 400px;
+  width: 40%; /* Ajusta para uma largura menor, flutuando no centro */
+  max-width: 500px; /* Limita a largura máxima */
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease-in-out;
   opacity: 0;
-  transform: translate(-50%, -30%) scale(0.9);
   visibility: hidden;
+  transform: translate(-50%, -50%) scale(0.9); /* Centraliza com escala */
 }
 
 .modal-open {
   opacity: 1;
-  transform: translate(-50%, -20%) scale(1);
+  transform: translate(-50%, -50%) scale(1); /* Mantém a centralização ao abrir */
   visibility: visible;
 }
 
@@ -87,4 +89,27 @@ body{
   justify-content: space-between;
   width: 100%;
   height: calc(100vh - 20px);
+}
+
+/* Media Queries para telas menores */
+@media (max-width: 768px) {
+  .modal {
+    width: 80%; /* Torna o modal um pouco maior em telas menores */
+  }
+}
+
+@media (max-width: 480px) {
+  .modal {
+    width: 90%; /* Modal maior ainda em telas muito pequenas */
+    padding: 15px; /* Reduz o padding em telas muito pequenas */
+  }
+  
+  .modal h2 {
+    font-size: 16px; /* Reduz o título em dispositivos móveis */
+  }
+
+  .modal button {
+    font-size: 14px; /* Ajusta o tamanho da fonte dos botões */
+    padding: 8px; /* Reduz o padding dos botões */
+  }
 }
