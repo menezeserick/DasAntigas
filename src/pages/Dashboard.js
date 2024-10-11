@@ -47,31 +47,40 @@ const Dashboard = () => {
             const querySnapshot = await getDocs(collection(db, "boxes"));
             const existingBox = querySnapshot.docs.find(doc => doc.data().date === today);
 
-            const professionalSnapshot = await getDocs(collection(db, "professionals"));
-            const professionalData = professionalSnapshot.docs.map(doc => ({
-                id: doc.id,
-                name: doc.data().name,
-                balance: parseFloat(doc.data().balance) || 0 // Converte o saldo para número
-            }));
+            if (existingBox) {
+                // Se já houver registro para hoje, exibe os dados
+                const boxData = existingBox.data();
+                const professionalBalancesFromBox = boxData.professionals;
 
-            // Atualiza o estado com os saldos dos profissionais
-            setProfessionalBalances(professionalData);
+                // Atualiza o estado com os dados da caixa existente (nome e saldo dos profissionais)
+                setProfessionalBalances(professionalBalancesFromBox);
 
-            if (!existingBox) {
-                // Se não houver registro para hoje, cria um novo
+                console.log("Caixa já registrado hoje. Exibindo os dados.");
+            } else {
+                // Se não houver registro para hoje, consulta os profissionais e cria um novo registro de caixa
+                const professionalSnapshot = await getDocs(collection(db, "professionals"));
+                const professionalData = professionalSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    name: doc.data().name,
+                    balance: parseFloat(doc.data().balance) || 0
+                }));
+
+                // Atualiza o estado com os saldos dos profissionais
+                setProfessionalBalances(professionalData);
+
+                // Cria o registro do caixa com a data de hoje e os saldos dos profissionais
                 await addDoc(collection(db, "boxes"), {
                     date: today,
                     professionals: professionalData,
                 });
 
                 console.log("Caixa registrado com sucesso.");
-            } else {
-                console.log("Caixa já registrado hoje. Apenas exibindo os dados.");
             }
         } catch (error) {
             console.error("Erro ao abrir o caixa: ", error);
         }
     };
+
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -217,7 +226,7 @@ const Dashboard = () => {
 
     return (
         <div className="container">
-           <Header
+            <Header
                 openScheduleModal={openModal}
                 openProfessionalModal={openProfessionalModal}
                 openServiceModal={openServiceModal}
@@ -299,22 +308,22 @@ const Dashboard = () => {
                 </div>
             )}
             {modalRegisterBoxOpen && (
-                <div className={`modal-overlay modal-overlay-open`} onClick={closeRegisterBoxModal}>
-                    <div className="modal modal-open large-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-overlay modal-overlay-open" onClick={closeRegisterBoxModal}>
+                    <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
                         <h2>Caixa</h2>
-                        {professionalBalances.length > 0 ? (
-                            professionalBalances.map((prof, index) => (
-                                <div key={index}>
-                                    <span>{prof.name}: </span>
-                                    <span>R$ {prof.balance.toFixed(2)}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <p>Carregando os dados...</p>
-                        )}
+                        <h3>Saldos dos Profissionais:</h3>
+                        <ul>
+                            {professionalBalances.map((professional) => (
+                                <li key={professional.id}>
+                                    {professional.name}: R$ {professional.balance.toFixed(2)}
+                                </li>
+                            ))}
+                        </ul>
+                        <button onClick={closeRegisterBoxModal}>Fechar</button>
                     </div>
                 </div>
             )}
+
         </div>
     );
 };
