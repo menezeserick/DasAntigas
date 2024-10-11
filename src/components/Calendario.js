@@ -5,10 +5,10 @@ import 'moment/locale/pt-br';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../Styles/Calendario.css';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, addDoc, query, where} from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where, updateDoc } from 'firebase/firestore';
 
-
-const localizer = momentLocalizer(moment.tz.setDefault("America/Sao_Paulo"));
+const localizer = momentLocalizer(moment);
+moment.tz.setDefault("America/Sao_Paulo");
 moment.locale('pt-br');
 
 const CustomResourceHeader = ({ label }) => (
@@ -108,18 +108,77 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
     
         try {
             // 1. Adiciona a venda ao banco de dados
-            await addDoc(collection(db, "vendas"), {
+            const vendaDoc = await addDoc(collection(db, "vendas"), {
                 event: selectedEvent,
-                services: selectedServices, // O profissional está dentro de cada serviço
+                services: selectedServices,
                 paymentMethod: selectedPaymentMethod,
                 totalPrice,
             });
+    
+            console.log("Venda adicionada com sucesso: ", vendaDoc.id);
+    
+            // 2. Buscar o documento 'box' do dia atual com fuso horário ajustado
+            const today = new Date().toLocaleDateString('pt-BR', {
+                timeZone: 'America/Sao_Paulo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            }).split('/').reverse().join('-'); // Formata como YYYY-MM-DD
+    
+            console.log("Data de hoje ajustada: ", today);
+    
+            const q = query(collection(db, "boxes"), where("date", "==", today));
+    
+            const querySnapshot = await getDocs(q);
+    
+            if (querySnapshot.empty) {
+                console.error(`Nenhum caixa foi encontrado para a data: ${today}`);
+                return;
+            }
+    
+            const boxDoc = querySnapshot.docs[0]; // Supondo que existe apenas um caixa por dia
+            const boxData = boxDoc.data();
+            const professionals = boxData.professionals || []; // Array de profissionais
+    
+            console.log(`Caixa encontrado para a data ${today}, ID do documento: ${boxDoc.id}`);
+    
+            // 3. Atualiza o saldo dos profissionais
+            const updates = selectedServices.map(async (service) => {
+                const professionalId = service.selectedProfessional; // ID do profissional
+                const serviceTotal = service.price * service.quantity; // Valor total do serviço
+    
+                console.log(`Atualizando saldo para o profissional ID: ${professionalId}, Total do Serviço: ${serviceTotal}`);
+    
+                // 4. Encontra o profissional dentro do array pelo ID
+                const professionalIndex = professionals.findIndex(p => p.id === professionalId);
+    
+                if (professionalIndex !== -1) {
+                    // 5. Atualiza o saldo do profissional encontrado
+                    const professional = professionals[professionalIndex];
+                    const newBalance = parseFloat(professional.balance) + serviceTotal;
+    
+                    // 6. Atualiza o saldo no array de profissionais
+                    professionals[professionalIndex].balance = newBalance;
+    
+                    // 7. Atualiza o documento 'box' no Firestore
+                    await updateDoc(boxDoc.ref, { professionals });
+    
+                    console.log(`Saldo atualizado para o profissional ID: ${professionalId}, Novo saldo: ${newBalance}`);
+                } else {
+                    console.error(`Profissional com ID ${professionalId} não encontrado no array de profissionais.`);
+                }
+            });
+    
+            // Aguarda todas as atualizações de saldo
+            await Promise.all(updates);
+    
             onComplete(); // Finaliza a venda
         } catch (error) {
             console.error("Erro ao adicionar venda: ", error);
         }
     };
-    
+
+
     const handleRemoveService = (serviceId) => {
         setSelectedServices((prev) => prev.filter(s => s.id !== serviceId));
     };
@@ -148,11 +207,12 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         setSelectedServices((prev) =>
             prev.map(s =>
                 s.id === serviceId
-                    ? { ...s, selectedProfessional: professionalId } // Atualiza o profissional do serviço específico
+                    ? { ...s, selectedProfessional: professionalId } // Atualiza o ID do profissional do serviço específico
                     : s
             )
         );
     };
+
 
     useEffect(() => {
         calculateTotalPrice();
@@ -200,7 +260,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                                     >
                                         <option value="">Selecione um profissional</option>
                                         {professionals.map(professional => (
-                                            <option key={professional.id} value={professional.title}>{professional.title}</option>
+                                            <option key={professional.id} value={professional.id}>{professional.title}</option>
                                         ))}
                                     </select>
 
@@ -283,67 +343,68 @@ const Calendario = ({ events, professionals = [] }) => {
 
     return (
         <div className="calendar-layout">
-            <div className="monthly-calendar">
-                <Calendar
-                    localizer={localizer}
-                    events={events}
-                    startAccessor="start"
-                    endAccessor="end"
-                    style={{ height: 400, marginBottom: '20px', marginLeft: '10px' }}
-                    step={30}
-                    timeslots={1}
-                    views={['month']}
-                    defaultView="month"
-                    min={new Date(1970, 1, 1, 8, 0, 0)}
-                    max={new Date(1970, 1, 1, 20, 0, 0)}
-                    resources={professionals}
-                    resourceAccessor="resourceId"
-                    resourceIdAccessor="id"
-                    resourceTitleAccessor="title"
-                    className="calendar"
-                    onNavigate={handleNavigate}
-                />
-                <DailySalesSummary selectedDate={selectedDate} />
-            </div>
-
-            <div className="daily-calendar">
-                <Calendar
-                    localizer={localizer}
-                    events={events}
-                    startAccessor="start"
-                    endAccessor="end"
-                    style={{ height: 500 }}
-                    step={30}
-                    timeslots={1}
-                    views={['day']}
-                    defaultView="day"
-                    date={selectedDate}
-                    min={new Date(1970, 1, 1, 8, 0, 0)}
-                    max={new Date(1970, 1, 1, 22, 0, 0)}
-                    resources={professionals}
-                    resourceAccessor="resourceId"
-                    resourceIdAccessor="id"
-                    resourceTitleAccessor="title"
-                    className="calendar"
-                    onSelectEvent={handleEventSelect}
-                    components={{
-                        resourceHeader: CustomResourceHeader,
-                    }}
-                />
-            </div>
-
-            {isCompleting && (
-                <CompletionForm
-                    selectedEvent={selectedEvent}
-                    professionals={professionals}
-                    paymentMethods={paymentMethods}
-                    onComplete={handleComplete}
-                    onCancel={handleCancel}
-                    services={services}
-                />
-            )}
+          <div className="monthly-calendar">
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: 400, marginBottom: '20px', marginLeft: '10px' }}
+              step={30}
+              timeslots={1}
+              views={['month']}
+              defaultView="month"
+              min={new Date(1970, 1, 1, 8, 0, 0)}
+              max={new Date(1970, 1, 1, 20, 0, 0)}
+              resources={professionals}
+              resourceAccessor="resourceId"
+              resourceIdAccessor="id"
+              resourceTitleAccessor="title"
+              className="calendar"
+              onNavigate={handleNavigate} 
+            />
+            <DailySalesSummary selectedDate={selectedDate} />
+          </div>
+    
+          <div className="daily-calendar">
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: 500 }}
+              step={30}
+              timeslots={1}
+              views={['day']}
+              defaultView="day"
+              date={selectedDate} 
+              min={new Date(1970, 1, 1, 8, 0, 0)}
+              max={new Date(1970, 1, 1, 22, 0, 0)}
+              resources={professionals}
+              resourceAccessor="resourceId"
+              resourceIdAccessor="id"
+              resourceTitleAccessor="title"
+              className="calendar"
+              onSelectEvent={handleEventSelect} 
+              components={{
+                resourceHeader: CustomResourceHeader, 
+              }}
+              onNavigate={handleNavigate} 
+            />
+          </div>
+    
+          {isCompleting && (
+            <CompletionForm
+              selectedEvent={selectedEvent}
+              professionals={professionals}
+              paymentMethods={paymentMethods}
+              onComplete={handleComplete}
+              onCancel={handleCancel}
+              services={services}
+            />
+          )}
         </div>
-    );
-};
-
-export default Calendario;
+      );
+    };
+    
+    export default Calendario;
