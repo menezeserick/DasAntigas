@@ -54,7 +54,6 @@ const DailySalesSummary = ({ selectedDate }) => {
                     {sales.map((sale) => (
                         <li key={sale.id}>
                             <strong>Cliente:</strong> {sale.event.title} <br />
-                            <strong>Profissional:</strong> {sale.professional} <br />
                             <strong>Total:</strong> R$ {sale.totalPrice.toFixed(2)} <br />
                         </li>
                     ))}
@@ -70,6 +69,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
     const [selectedServices, setSelectedServices] = useState([]);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
     const [totalPrice, setTotalPrice] = useState(0);
+    const [errorMessage, setErrorMessage] = useState('');  // Adicionar estado para mensagem de erro
 
 
     useEffect(() => {
@@ -105,73 +105,76 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
     const handleAddCompletion = async (e) => {
         e.preventDefault();
-    
+
+        // 1. Verificar se o evento é do mesmo dia
+        const eventDate = moment(selectedEvent.start).format('YYYY-MM-DD');
+        const today = moment().format('YYYY-MM-DD');
+
+        if (eventDate !== today) {
+            setErrorMessage('As vendas só podem ser concluídas no mesmo dia do agendamento.');
+            return;
+        }
+
         try {
-            // 1. Adiciona a venda ao banco de dados
+            // 2. Adiciona a venda ao banco de dados
             const vendaDoc = await addDoc(collection(db, "vendas"), {
                 event: selectedEvent,
                 services: selectedServices,
                 paymentMethod: selectedPaymentMethod,
                 totalPrice,
             });
-    
+
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
-    
-            // 2. Buscar o documento 'box' do dia atual com fuso horário ajustado
+
+            // 3. Buscar o documento 'box' do dia atual com fuso horário ajustado
             const today = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
             }).split('/').reverse().join('-'); // Formata como YYYY-MM-DD
-    
-            console.log("Data de hoje ajustada: ", today);
-    
+
             const q = query(collection(db, "boxes"), where("date", "==", today));
-    
+
             const querySnapshot = await getDocs(q);
-    
+
             if (querySnapshot.empty) {
                 console.error(`Nenhum caixa foi encontrado para a data: ${today}`);
                 return;
             }
-    
+
             const boxDoc = querySnapshot.docs[0]; // Supondo que existe apenas um caixa por dia
             const boxData = boxDoc.data();
             const professionals = boxData.professionals || []; // Array de profissionais
-    
-            console.log(`Caixa encontrado para a data ${today}, ID do documento: ${boxDoc.id}`);
-    
-            // 3. Atualiza o saldo dos profissionais
+
+            // 4. Atualiza o saldo dos profissionais
             const updates = selectedServices.map(async (service) => {
                 const professionalId = service.selectedProfessional; // ID do profissional
                 const serviceTotal = service.price * service.quantity; // Valor total do serviço
-    
-                console.log(`Atualizando saldo para o profissional ID: ${professionalId}, Total do Serviço: ${serviceTotal}`);
-    
-                // 4. Encontra o profissional dentro do array pelo ID
+
+                // 5. Encontra o profissional dentro do array pelo ID
                 const professionalIndex = professionals.findIndex(p => p.id === professionalId);
-    
+
                 if (professionalIndex !== -1) {
-                    // 5. Atualiza o saldo do profissional encontrado
+                    // 6. Atualiza o saldo do profissional encontrado
                     const professional = professionals[professionalIndex];
                     const newBalance = parseFloat(professional.balance) + serviceTotal;
-    
-                    // 6. Atualiza o saldo no array de profissionais
+
+                    // 7. Atualiza o saldo no array de profissionais
                     professionals[professionalIndex].balance = newBalance;
-    
-                    // 7. Atualiza o documento 'box' no Firestore
+
+                    // 8. Atualiza o documento 'box' no Firestore
                     await updateDoc(boxDoc.ref, { professionals });
-    
+
                     console.log(`Saldo atualizado para o profissional ID: ${professionalId}, Novo saldo: ${newBalance}`);
                 } else {
                     console.error(`Profissional com ID ${professionalId} não encontrado no array de profissionais.`);
                 }
             });
-    
+
             // Aguarda todas as atualizações de saldo
             await Promise.all(updates);
-    
+
             onComplete(); // Finaliza a venda
         } catch (error) {
             console.error("Erro ao adicionar venda: ", error);
@@ -227,6 +230,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         <div className={`modal-overlay modal-overlay-open`}>
             <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
                 <h2>Completar Venda</h2>
+                {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Renderiza a mensagem de erro se existir */}
                 <form onSubmit={handleSubmit}>
                     <label>Método de Pagamento:</label>
                     <select onChange={(e) => setSelectedPaymentMethod(e.target.value)} value={selectedPaymentMethod} required>
@@ -250,19 +254,21 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                         {selectedServices.map(service => (
                             <li key={service.id} className="service-item">
                                 <div className="service-info">
-                                    <span>{service.name} - R$ {service.price.toFixed(2)} x {service.quantity}</span>
+                                    <div className="service-details">
+                                        <span>{service.name} - R$ {service.price.toFixed(2)} x {service.quantity}</span>
 
-                                    <label>Profissional:</label>
-                                    <select
-                                        onChange={(e) => handleProfessionalChange(service.id, e.target.value)}
-                                        value={service.selectedProfessional}
-                                        required
-                                    >
-                                        <option value="">Selecione um profissional</option>
-                                        {professionals.map(professional => (
-                                            <option key={professional.id} value={professional.id}>{professional.title}</option>
-                                        ))}
-                                    </select>
+                                        <label>Profissional:</label>
+                                        <select
+                                            onChange={(e) => handleProfessionalChange(service.id, e.target.value)}
+                                            value={service.selectedProfessional}
+                                            required
+                                        >
+                                            <option value="">Selecione um profissional</option>
+                                            {professionals.map(professional => (
+                                                <option key={professional.id} value={professional.id}>{professional.title}</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
                                     <div className="service-controls">
                                         <button type="button" className="decrement-btn" onClick={() => handleDecrementService(service.id)}>-</button>
@@ -343,68 +349,130 @@ const Calendario = ({ events, professionals = [] }) => {
 
     return (
         <div className="calendar-layout">
-          <div className="monthly-calendar">
-            <Calendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 400, marginBottom: '20px', marginLeft: '10px' }}
-              step={30}
-              timeslots={1}
-              views={['month']}
-              defaultView="month"
-              min={new Date(1970, 1, 1, 8, 0, 0)}
-              max={new Date(1970, 1, 1, 20, 0, 0)}
-              resources={professionals}
-              resourceAccessor="resourceId"
-              resourceIdAccessor="id"
-              resourceTitleAccessor="title"
-              className="calendar"
-              onNavigate={handleNavigate} 
-            />
-            <DailySalesSummary selectedDate={selectedDate} />
-          </div>
-    
-          <div className="daily-calendar">
-            <Calendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 500 }}
-              step={30}
-              timeslots={1}
-              views={['day']}
-              defaultView="day"
-              date={selectedDate} 
-              min={new Date(1970, 1, 1, 8, 0, 0)}
-              max={new Date(1970, 1, 1, 22, 0, 0)}
-              resources={professionals}
-              resourceAccessor="resourceId"
-              resourceIdAccessor="id"
-              resourceTitleAccessor="title"
-              className="calendar"
-              onSelectEvent={handleEventSelect} 
-              components={{
-                resourceHeader: CustomResourceHeader, 
-              }}
-              onNavigate={handleNavigate} 
-            />
-          </div>
-    
-          {isCompleting && (
-            <CompletionForm
-              selectedEvent={selectedEvent}
-              professionals={professionals}
-              paymentMethods={paymentMethods}
-              onComplete={handleComplete}
-              onCancel={handleCancel}
-              services={services}
-            />
-          )}
+            <div className="monthly-calendar">
+                <Calendar
+                    localizer={localizer}
+                    events={events}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: 400, marginBottom: '20px', marginLeft: '10px' }}
+                    step={30}
+                    timeslots={1}
+                    views={['month']}
+                    defaultView="month"
+                    min={new Date(1970, 1, 1, 8, 0, 0)}
+                    max={new Date(1970, 1, 1, 20, 0, 0)}
+                    resources={professionals}
+                    resourceAccessor="resourceId"
+                    resourceIdAccessor="id"
+                    resourceTitleAccessor="title"
+                    className="calendar"
+                    onNavigate={handleNavigate}
+                />
+                <DailySalesSummary selectedDate={selectedDate} />
+            </div>
+
+            <div className="daily-calendar">
+                <Calendar
+                    localizer={localizer}
+                    events={events}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: 500 }}
+                    step={30}
+                    timeslots={1}
+                    views={['day']}
+                    defaultView="day"
+                    date={selectedDate}
+                    min={new Date(1970, 1, 1, 8, 0, 0)}
+                    max={new Date(1970, 1, 1, 22, 0, 0)}
+                    resources={professionals}
+                    resourceAccessor="resourceId"
+                    resourceIdAccessor="id"
+                    resourceTitleAccessor="title"
+                    className="calendar"
+                    onSelectEvent={handleEventSelect}
+                    components={{
+                        resourceHeader: CustomResourceHeader,
+                    }}
+                    onNavigate={handleNavigate}
+                />
+            </div>
+
+            {isCompleting && (
+                <CompletionForm
+                    selectedEvent={selectedEvent}
+                    professionals={professionals}
+                    paymentMethods={paymentMethods}
+                    onComplete={handleComplete}
+                    onCancel={handleCancel}
+                    services={services}
+                />
+            )}
+
+            <div className='calendar-mobile'>
+                <div className="monthly-calendar">
+                    <Calendar
+                        localizer={localizer}
+                        events={events}
+                        startAccessor="start"
+                        endAccessor="end"
+                        style={{ height: 400, marginBottom: '20px', marginLeft: '10px' }}
+                        step={30}
+                        timeslots={1}
+                        views={['month']}
+                        defaultView="month"
+                        min={new Date(1970, 1, 1, 8, 0, 0)}
+                        max={new Date(1970, 1, 1, 20, 0, 0)}
+                        resources={professionals}
+                        resourceAccessor="resourceId"
+                        resourceIdAccessor="id"
+                        resourceTitleAccessor="title"
+                        className="calendar"
+                        onNavigate={handleNavigate}
+                    />
+                    <div className="daily-calendar">
+                        <Calendar
+                            localizer={localizer}
+                            events={events}
+                            startAccessor="start"
+                            endAccessor="end"
+                            style={{ height: 500 }}
+                            step={30}
+                            timeslots={1}
+                            views={['day']}
+                            defaultView="day"
+                            date={selectedDate}
+                            min={new Date(1970, 1, 1, 8, 0, 0)}
+                            max={new Date(1970, 1, 1, 22, 0, 0)}
+                            resources={professionals}
+                            resourceAccessor="resourceId"
+                            resourceIdAccessor="id"
+                            resourceTitleAccessor="title"
+                            className="calendar"
+                            onSelectEvent={handleEventSelect}
+                            components={{
+                                resourceHeader: CustomResourceHeader,
+                            }}
+                            onNavigate={handleNavigate}
+                        />
+                    </div>
+
+                    {isCompleting && (
+                        <CompletionForm
+                            selectedEvent={selectedEvent}
+                            professionals={professionals}
+                            paymentMethods={paymentMethods}
+                            onComplete={handleComplete}
+                            onCancel={handleCancel}
+                            services={services}
+                        />
+                    )}
+                    <DailySalesSummary selectedDate={selectedDate} />
+                </div>
+            </div>
         </div>
-      );
-    };
-    
-    export default Calendario;
+    );
+};
+
+export default Calendario;

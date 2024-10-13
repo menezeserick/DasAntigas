@@ -6,8 +6,13 @@
     padding: 20px;
     color: #F2F2F2;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    position: relative; /* Necessário para posicionar o menu abaixo do hambúrguer */
+    position: fixed; /* Altera para fixo */
+    top: 0; /* Fixa no topo da página */
+    left: 0; /* Alinha à esquerda */
+    right: 0; /* Alinha à direita */
+    z-index: 1000; /* Garante que o cabeçalho fique acima de outros elementos */
 }
+
 
 .logo-container {
     display: flex;

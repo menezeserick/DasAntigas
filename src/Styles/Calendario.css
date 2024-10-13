@@ -1,13 +1,33 @@
 .daily-calendar {
-    width: calc(100% - 30%);
+    width: calc(100% - 6%);
     max-width: 100%;
     border-radius: 10px;
     max-height: calc(100vh - 150px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
     overflow: hidden !important;
-    height: 100%
+    height: 100%;
+    margin-top: 105px; /* Margin para desktop */
 }
+
+.monthly-calendar {
+    flex: 0 0 30%;
+    margin-right: 20px;
+    margin-top: 120px; /* Margin para desktop */
+}
+
+/* Ajustes para dispositivos móveis */
+@media screen and (max-width: 767px) {
+    .daily-calendar {
+        margin-top: 0; /* Sem margin no celular, ajuste se necessário */
+    }
+
+    .monthly-calendar {
+        margin-top: 70px; /* Margin superior para o mensal no celular */
+    }
+}
+
+/* Resto do CSS permanece o mesmo... */
 
 .daily-calendar .rbc-toolbar {
     display: flex;
@@ -30,13 +50,11 @@
     background-color: #A6A6A6;
 }
 
-
 .daily-calendar .rbc-toolbar-label {
     font-size: 1.5rem;
     font-weight: bold;
     color: #000000;
 }
-
 
 .daily-calendar .rbc-time-header-cell {
     font-weight: bold;
@@ -44,7 +62,6 @@
     padding: 10px 0;
     color: #A6A6A6;
 }
-
 
 .daily-calendar .rbc-event {
     background-color: #A6A6A6;
@@ -70,11 +87,7 @@
     border-radius: 4px;
 }
 
-.monthly-calendar {
-    flex: 0 0 30%;
-    margin-right: 20px;
-}
-
+/* Continuação do seu CSS... */
 .custom-resource-header {
     display: flex;
     justify-content: center;
@@ -134,32 +147,6 @@
     z-index: 1000;
 }
 
-.edit-event-form {
-    background: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    width: 300px;
-}
-
-.modal-overlay {
-    background-color: rgba(0, 0, 0, 0.7);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 999;
-    transition: opacity 0.3s ease-in-out;
-    opacity: 0;
-    visibility: hidden;
-}
-
-.modal-overlay-open {
-    opacity: 1;
-    visibility: visible;
-}
-
 .selected-services-list {
     list-style-type: none;
     padding: 0;
@@ -168,39 +155,42 @@
 
 .service-item {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: 10px;
     margin-bottom: 10px;
     background-color: #f7f7f7;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: large;
 }
 
 .service-info {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     width: 100%;
     align-items: center;
 }
 
+.service-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .service-controls {
     display: flex;
+    align-items: center;
     gap: 10px;
 }
 
-button {
-    background-color: #737373;
-    color: #fff;
-    border: none;
+.service-controls button {
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: #5a5a5a;
 }
 
 .decrement-btn, .increment-btn {
@@ -218,7 +208,6 @@ button:hover {
 .remove-btn:hover {
     background-color: #c9302c;
 }
-
 
 .total-price {
     font-size: 1.5rem;
@@ -241,7 +230,7 @@ button:hover {
     overflow-y: auto;
     border: 1px solid #ccc;
     padding-left: 10px;
-    
+    width: calc(100% - 10%);
 }
 
 .sales-summary::-webkit-scrollbar {
@@ -301,17 +290,41 @@ button:hover {
     font-size: 1.2rem;
 }
 
-
 /* Calendário mensal no modo responsivo */
-@media (max-width: 768px) {
-    .monthly-calendar {
-        display: block;
-        width: 100%;
-        margin: 0;
-    }
-
-    .daily-calendar {
-        display: none; /* Esconde o calendário diário */
+@media screen and (min-width: 768px) {
+    .calendar-mobile {
+        display: none;
     }
 }
 
+/* Esconde o calendário de desktop em telas menores (mobile) */
+@media screen and (max-width: 767px) {
+    .calendar-layout > .monthly-calendar,
+    .calendar-layout > .daily-calendar {
+        display: none;
+    }
+
+    .sales-summary{
+        margin-left: 15px;
+    }
+    /* Ajusta o calendário no mobile para caber dentro da tela */
+    .calendar-mobile {
+        width: 100%; /* Garante que a largura seja 100% da tela */
+        overflow-x: hidden; /* Remove o overflow horizontal */
+        padding: 0 10px; /* Adiciona algum espaçamento interno */
+        box-sizing: border-box; /* Inclui o padding na largura total */
+    }
+
+    .calendar-mobile .calendar {
+        width: 100%; /* Garante que o calendário não ultrapasse a tela */
+        max-width: 100%; /* Evita que o calendário seja maior que a tela */
+        overflow-x: auto; /* Caso o conteúdo seja muito largo, torna scrollable horizontal */
+    }
+
+    /* Ajustes de altura para garantir que o calendário se encaixe na tela */
+    .calendar-mobile .monthly-calendar,
+    .calendar-mobile .daily-calendar {
+        height: auto; /* Garante que a altura se ajuste ao conteúdo */
+        max-height: 100vh; /* Impede que o conteúdo ultrapasse a altura da tela */
+    }
+}
