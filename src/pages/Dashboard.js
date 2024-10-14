@@ -110,28 +110,28 @@ const Dashboard = () => {
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
-    
+
         try {
             const professional = professionals.find(p => p.title === formData.professional);
             if (!professional) {
                 console.error("Profissional não encontrado!");
                 return;
             }
-    
+
             // Cria um evento para cada horário na lista `selectedTimes`
             const newEvents = selectedTimes.map(time => {
                 const [hours, minutes] = time.split(":");
                 const start = moment.tz(`${formData.date} ${hours}:${minutes}`, "YYYY-MM-DD HH:mm", "America/Sao_Paulo").toDate();
                 const end = moment(start).add(30, 'minutes').toDate();
-            
+
                 return {
-                    title: `${formData.clientName}`, // Apenas o nome do cliente
+                    title: `${formData.clientName} - ${formData.title}`, // Somente o cliente e serviço
                     start: start,
                     end: end,
                     resourceId: professional.id
                 };
             });
-    
+
             // Salva cada evento no Firestore
             for (const event of newEvents) {
                 await addDoc(collection(db, "schedules"), {
@@ -142,10 +142,10 @@ const Dashboard = () => {
                     time: moment(event.start).format("HH:mm")
                 });
             }
-    
+
             // Atualiza o estado local com os novos eventos
             setEvents((prevEvents) => [...prevEvents, ...newEvents]);
-    
+
             // Fecha o modal e reseta os horários selecionados
             closeModal();
             setSelectedTimes([]);
@@ -221,7 +221,7 @@ const Dashboard = () => {
                     const data = doc.data();
                     const start = moment.tz(`${data.date} ${data.time}`, "YYYY-MM-DD HH:mm", "America/Sao_Paulo").toDate();
                     const end = moment(start).add(30, 'minutes').toDate();
-                
+
                     return {
                         title: `${data.clientName} - ${data.service}`, // Título com nome do cliente e serviço
                         start: start,
@@ -301,10 +301,11 @@ const Dashboard = () => {
                             </select>
                             <button type="button" onClick={handleAddTime}>Adicionar Horário</button>
 
-                            <ul>
+                            <ul class="selected-times">
                                 {selectedTimes.map((time, index) => (
                                     <li key={index}>
-                                        {time} <button type="button" onClick={() => handleRemoveTime(time)}>Remover</button>
+                                        {time}
+                                        <button type="button" onClick={() => handleRemoveTime(time)}>Remover</button>
                                     </li>
                                 ))}
                             </ul>

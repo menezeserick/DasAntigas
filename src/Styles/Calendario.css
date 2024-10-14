@@ -63,6 +63,40 @@
     color: #A6A6A6;
 }
 
+.monthly-calendar .rbc-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.monthly-calendar .rbc-toolbar button {
+    background-color: #737373;
+    color: #F2F2F2;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.monthly-calendar .rbc-toolbar button:hover {
+    background-color: #A6A6A6;
+}
+
+.monthly-calendar .rbc-toolbar-label {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #000000;
+}
+
+.monthly-calendars .rbc-time-header-cell {
+    font-weight: bold;
+    text-align: center;
+    padding: 10px 0;
+    color: #A6A6A6;
+}
+
 .daily-calendar .rbc-event {
     background-color: #A6A6A6;
     color: #F2F2F2;
@@ -289,6 +323,16 @@
     color: #737373;
     font-size: 1.2rem;
 }
+
+.rbc-event-content {
+   font-size: large
+}
+
+.rbc-event-label {
+    display: none; /* Oculta os horários do evento */
+}
+
+
 
 /* Calendário mensal no modo responsivo */
 @media screen and (min-width: 768px) {

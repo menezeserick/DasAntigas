@@ -290,6 +290,12 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
     );
 };
 
+const EventComponent = ({ event }) => (
+    <span>
+        {event.title}{event.serviceName}  {/* Exibe apenas o nome do cliente e o serviço */}
+    </span>
+);
+
 const Calendario = ({ events, professionals = [] }) => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [selectedEvent, setSelectedEvent] = useState(null);
@@ -325,7 +331,6 @@ const Calendario = ({ events, professionals = [] }) => {
         fetchPaymentMethods();
         fetchServices();
     }, []);
-
 
     const handleEventSelect = (event) => {
         setSelectedEvent(event);
@@ -394,6 +399,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     onSelectEvent={handleEventSelect}
                     components={{
                         resourceHeader: CustomResourceHeader,
+                        event: EventComponent  // Personaliza o conteúdo do evento
                     }}
                     onNavigate={handleNavigate}
                 />
@@ -453,6 +459,7 @@ const Calendario = ({ events, professionals = [] }) => {
                             onSelectEvent={handleEventSelect}
                             components={{
                                 resourceHeader: CustomResourceHeader,
+                                event: EventComponent  // Personaliza o conteúdo do evento
                             }}
                             onNavigate={handleNavigate}
                         />
