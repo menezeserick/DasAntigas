@@ -16,7 +16,7 @@ const Dashboard = () => {
     const [services, setServices] = useState([]);
     const [paymentMethods] = useState([]);
     const [professionalBalances, setProfessionalBalances] = useState([]);
-    const [selectedTimes, setSelectedTimes] = useState([]);  // Lista de horários
+    const [selectedTimes, setSelectedTimes] = useState([]);
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -32,10 +32,9 @@ const Dashboard = () => {
     const openServiceModal = () => setModalServiceOpen(true);
     const closeServiceModal = () => setModalServiceOpen(false);
 
-    // Função para abrir o modal e carregar os saldos dos profissionais
     const openRegisterBoxModal = async () => {
         setModalRegisterBoxOpen(true);
-        await handleOpenBox();  // Atualiza os dados ao abrir o modal
+        await handleOpenBox();
     };
 
     const closeRegisterBoxModal = () => setModalRegisterBoxOpen(false);
@@ -44,21 +43,17 @@ const Dashboard = () => {
         try {
             const today = moment().format('YYYY-MM-DD');
 
-            // Verifica se já existe um registro de caixa para a data atual
             const querySnapshot = await getDocs(collection(db, "boxes"));
             const existingBox = querySnapshot.docs.find(doc => doc.data().date === today);
 
             if (existingBox) {
-                // Se já houver registro para hoje, exibe os dados
                 const boxData = existingBox.data();
                 const professionalBalancesFromBox = boxData.professionals;
 
-                // Atualiza o estado com os dados da caixa existente (nome e saldo dos profissionais)
                 setProfessionalBalances(professionalBalancesFromBox);
 
                 console.log("Caixa já registrado hoje. Exibindo os dados.");
             } else {
-                // Se não houver registro para hoje, consulta os profissionais e cria um novo registro de caixa
                 const professionalSnapshot = await getDocs(collection(db, "professionals"));
                 const professionalData = professionalSnapshot.docs.map(doc => ({
                     id: doc.id,
@@ -66,10 +61,8 @@ const Dashboard = () => {
                     balance: parseFloat(doc.data().balance) || 0
                 }));
 
-                // Atualiza o estado com os saldos dos profissionais
                 setProfessionalBalances(professionalData);
 
-                // Cria o registro do caixa com a data de hoje e os saldos dos profissionais
                 await addDoc(collection(db, "boxes"), {
                     date: today,
                     professionals: professionalData,
@@ -83,19 +76,16 @@ const Dashboard = () => {
     };
 
 
-    // Função para adicionar o horário selecionado à lista
     const handleAddTime = () => {
         if (!formData.time) return;
 
-        // Adiciona o horário à lista de horários selecionados
         setSelectedTimes((prevTimes) => [...prevTimes, formData.time]);
         setFormData({
             ...formData,
-            time: '',  // Limpa o campo de horário após adicionar
+            time: '',
         });
     };
 
-    // Função para remover um horário da lista
     const handleRemoveTime = (timeToRemove) => {
         setSelectedTimes((prevTimes) => prevTimes.filter(time => time !== timeToRemove));
     };
@@ -118,35 +108,31 @@ const Dashboard = () => {
                 return;
             }
 
-            // Cria um evento para cada horário na lista `selectedTimes`
             const newEvents = selectedTimes.map(time => {
                 const [hours, minutes] = time.split(":");
                 const start = moment.tz(`${formData.date} ${hours}:${minutes}`, "YYYY-MM-DD HH:mm", "America/Sao_Paulo").toDate();
                 const end = moment(start).add(30, 'minutes').toDate();
 
                 return {
-                    title: `${formData.clientName} - ${formData.title}`, // Somente o cliente e serviço
+                    title: `${formData.clientName} - ${formData.title}`,
                     start: start,
                     end: end,
                     resourceId: professional.id
                 };
             });
 
-            // Salva cada evento no Firestore
             for (const event of newEvents) {
                 await addDoc(collection(db, "schedules"), {
                     clientName: formData.clientName,
-                    service: formData.title,  // Mantém o serviço para o registro no Firestore
+                    service: formData.title,
                     professional: formData.professional,
                     date: moment(event.start).format("YYYY-MM-DD"),
                     time: moment(event.start).format("HH:mm")
                 });
             }
 
-            // Atualiza o estado local com os novos eventos
             setEvents((prevEvents) => [...prevEvents, ...newEvents]);
 
-            // Fecha o modal e reseta os horários selecionados
             closeModal();
             setSelectedTimes([]);
         } catch (error) {
@@ -223,7 +209,7 @@ const Dashboard = () => {
                     const end = moment(start).add(30, 'minutes').toDate();
 
                     return {
-                        title: `${data.clientName} - ${data.service}`, // Título com nome do cliente e serviço
+                        title: `${data.clientName} - ${data.service}`,
                         start: start,
                         end: end,
                         resourceId: professionals.find(p => p.title === data.professional)?.id

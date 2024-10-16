@@ -6,13 +6,12 @@
     padding: 20px;
     color: #F2F2F2;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    position: fixed; /* Altera para fixo */
-    top: 0; /* Fixa no topo da página */
-    left: 0; /* Alinha à esquerda */
-    right: 0; /* Alinha à direita */
-    z-index: 1000; /* Garante que o cabeçalho fique acima de outros elementos */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
 }
-
 
 .logo-container {
     display: flex;
@@ -26,7 +25,6 @@
     color: #A6A6A6;
 }
 
-/* Ícone de hambúrguer ao lado direito */
 .hamburger-icon {
     display: none;
     flex-direction: column;
@@ -34,9 +32,9 @@
     width: 30px;
     height: 20px;
     cursor: pointer;
-    margin-left: auto; /* Move o ícone de hambúrguer para a direita */
-    position: relative; /* Para o menu ser posicionado em relação ao ícone */
-    z-index: 1100; /* Garante que o ícone fique acima do overlay */
+    margin-left: auto;
+    position: relative;
+    z-index: 1100;
 }
 
 .hamburger-icon .bar {
@@ -47,51 +45,48 @@
     transition: all 0.3s ease;
 }
 
-/* Transformar o ícone de hambúrguer em X */
 .hamburger-icon.open .bar:nth-child(1) {
     transform: rotate(45deg) translate(6px, 5px);
 }
 
 .hamburger-icon.open .bar:nth-child(2) {
-    opacity: 0; /* Desaparece a barra do meio */
+    opacity: 0;
 }
 
 .hamburger-icon.open .bar:nth-child(3) {
     transform: rotate(-45deg) translate(6px, -5px);
 }
 
-/* Botões de ação (menu maior) */
 .header-actions {
-    display: flex; /* Garante que o menu fique visível em telas maiores */
-    flex-direction: row; /* Alinha os botões horizontalmente em telas maiores */
+    display: flex;
+    flex-direction: row;
     gap: 15px;
 }
 
 @media (max-width: 768px) {
     .header-actions {
-        display: none; /* Esconde os botões de ação em telas menores (mostrados pelo hambúrguer) */
+        display: none;
         position: absolute;
-        top: 60px; /* Posiciona abaixo do ícone de hambúrguer */
+        top: 60px;
         right: 20px;
         flex-direction: column;
         gap: 10px;
         background-color: #333;
-        padding: 20px 40px; /* Aumenta o padding para que o menu fique maior */
+        padding: 20px 40px;
         border-radius: 10px;
-        z-index: 1100; /* Fica acima do overlay */
-        min-width: 200px; /* Define um tamanho mínimo para o menu */
+        z-index: 1100;
+        min-width: 200px;
     }
 
     .header-actions.active {
-        display: flex; /* Mostra o menu apenas em telas menores ao clicar no hambúrguer */
+        display: flex;
     }
 
     .hamburger-icon {
-        display: flex; /* Ícone de hambúrguer visível apenas em dispositivos menores */
+        display: flex;
     }
 }
 
-/* Fundo escurecido (overlay) */
 .overlay {
     position: fixed;
     top: 0;
@@ -99,15 +94,14 @@
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 1000; /* Garante que o overlay cubra tudo, exceto o menu e hambúrguer */
+    z-index: 1000;
 }
 
-/* Botões de ação */
 .action-btn {
     background-color: #737373;
     color: #F2F2F2;
     border: none;
-    padding: 15px 30px; /* Aumenta o tamanho dos botões */
+    padding: 15px 30px;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -117,7 +111,6 @@
     background-color: #575757;
 }
 
-/* Responsividade para telas menores */
 @media (max-width: 768px) {
     .logo-container {
         display: none;

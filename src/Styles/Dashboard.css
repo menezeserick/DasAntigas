@@ -8,8 +8,8 @@
   border-radius: 8px;
   width: 40%;
   max-width: 500px;
-  max-height: 80vh; /* Limita a altura máxima do modal para 80% da viewport */
-  overflow-y: auto; /* Permite scroll vertical dentro do modal */
+  max-height: 80vh;
+  overflow-y: auto;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease-in-out;
   opacity: 0;
@@ -22,10 +22,11 @@
   transform: translate(-50%, -50%) scale(1);
   visibility: visible;
 }
+
 .modal h2 {
   font-size: 18px;
   margin-bottom: 20px;
-  color: #F2F2F2; 
+  color: #F2F2F2;
 }
 
 .modal form {
@@ -36,14 +37,14 @@
 .modal label {
   margin-bottom: 5px;
   font-weight: bold;
-  color: #737373; 
+  color: #737373;
 }
 
 .modal input,
 .modal select {
   margin-bottom: 10px;
   padding: 8px;
-  border: 1px solid #262626; 
+  border: 1px solid #262626;
   border-radius: 4px;
   font-size: 16px;
 }
@@ -51,7 +52,7 @@
 .modal button {
   margin-top: 10px;
   background-color: #737373;
-  color: #F2F2F2; 
+  color: #F2F2F2;
   padding: 10px;
   border: none;
   border-radius: 5px;
@@ -60,7 +61,7 @@
 }
 
 .modal button:hover {
-  background-color: #575757; 
+  background-color: #575757;
 }
 
 .modal-overlay {
@@ -88,33 +89,30 @@
   height: calc(100vh - 20px);
 }
 
-/* Media Queries para telas menores */
 @media (max-width: 768px) {
   .modal {
-    width: 80%; /* Torna o modal um pouco maior em telas menores */
+    width: 80%;
   }
 }
 
 @media (max-width: 480px) {
   .modal {
-    width: 90%; /* Modal maior ainda em telas muito pequenas */
-    padding: 15px; /* Reduz o padding em telas muito pequenas */
+    width: 90%;
+    padding: 15px;
   }
-  
+
   .modal h2 {
-    font-size: 16px; /* Reduz o título em dispositivos móveis */
+    font-size: 16px;
   }
 
   .modal button {
-    font-size: 14px; /* Ajusta o tamanho da fonte dos botões */
-    padding: 8px; /* Reduz o padding dos botões */
+    font-size: 14px;
+    padding: 8px;
   }
 }
 
-
-/* Estilo da lista de horários selecionados */
 ul.selected-times {
-  list-style-type: none; /* Remove os bullets padrões */
+  list-style-type: none;
   padding: 0;
 }
 
@@ -124,38 +122,36 @@ ul.selected-times li {
   justify-content: space-between;
   padding: 10px;
   margin-bottom: 10px;
-  background-color: #E0E0E0; /* Fundo mais claro para os itens */
-  border-radius: 5px; /* Borda arredondada */
-  font-size: 16px; /* Tamanho de fonte agradável */
+  background-color: #E0E0E0;
+  border-radius: 5px;
+  font-size: 16px;
   color: #333;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Leve sombra para destaque */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Estilo para o botão de remover horário */
 ul.selected-times li button {
-  background-color: #FF4D4D; /* Cor de fundo mais chamativa para remover */
-  color: #fff; /* Cor branca para o texto */
+  background-color: #FF4D4D;
+  color: #fff;
   border: none;
   border-radius: 5px;
   padding: 6px 12px;
-  font-size: 14px; /* Tamanho de fonte do botão */
+  font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
 ul.selected-times li button:hover {
-  background-color: #CC0000; /* Cor ao passar o mouse */
+  background-color: #CC0000;
 }
 
-/* Ajuste na lista e nos botões em telas pequenas */
 @media (max-width: 480px) {
   ul.selected-times li {
-    font-size: 14px; /* Reduz a fonte em telas pequenas */
+    font-size: 14px;
     padding: 8px;
   }
-  
+
   ul.selected-times li button {
     padding: 5px 10px;
-    font-size: 12px; /* Reduz o tamanho do botão */
+    font-size: 12px;
   }
 }

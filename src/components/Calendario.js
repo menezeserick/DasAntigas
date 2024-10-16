@@ -69,7 +69,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
     const [selectedServices, setSelectedServices] = useState([]);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
     const [totalPrice, setTotalPrice] = useState(0);
-    const [errorMessage, setErrorMessage] = useState('');  // Adicionar estado para mensagem de erro
+    const [errorMessage, setErrorMessage] = useState('');  
 
 
     useEffect(() => {
@@ -96,7 +96,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     );
                     return updatedServices;
                 } else {
-                    const newService = { ...service, quantity: 1, selectedProfessional: '' }; // Adicionando campo para o profissional
+                    const newService = { ...service, quantity: 1, selectedProfessional: '' }; 
                     return [...prev, newService];
                 }
             });
@@ -106,7 +106,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
     const handleAddCompletion = async (e) => {
         e.preventDefault();
 
-        // 1. Verificar se o evento é do mesmo dia
         const eventDate = moment(selectedEvent.start).format('YYYY-MM-DD');
         const today = moment().format('YYYY-MM-DD');
 
@@ -116,7 +115,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         }
 
         try {
-            // 2. Adiciona a venda ao banco de dados
             const vendaDoc = await addDoc(collection(db, "vendas"), {
                 event: selectedEvent,
                 services: selectedServices,
@@ -126,13 +124,12 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
 
-            // 3. Buscar o documento 'box' do dia atual com fuso horário ajustado
             const today = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
-            }).split('/').reverse().join('-'); // Formata como YYYY-MM-DD
+            }).split('/').reverse().join('-'); 
 
             const q = query(collection(db, "boxes"), where("date", "==", today));
 
@@ -143,27 +140,22 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 return;
             }
 
-            const boxDoc = querySnapshot.docs[0]; // Supondo que existe apenas um caixa por dia
+            const boxDoc = querySnapshot.docs[0]; 
             const boxData = boxDoc.data();
-            const professionals = boxData.professionals || []; // Array de profissionais
+            const professionals = boxData.professionals || []; 
 
-            // 4. Atualiza o saldo dos profissionais
             const updates = selectedServices.map(async (service) => {
-                const professionalId = service.selectedProfessional; // ID do profissional
-                const serviceTotal = service.price * service.quantity; // Valor total do serviço
+                const professionalId = service.selectedProfessional; 
+                const serviceTotal = service.price * service.quantity; 
 
-                // 5. Encontra o profissional dentro do array pelo ID
                 const professionalIndex = professionals.findIndex(p => p.id === professionalId);
 
                 if (professionalIndex !== -1) {
-                    // 6. Atualiza o saldo do profissional encontrado
                     const professional = professionals[professionalIndex];
                     const newBalance = parseFloat(professional.balance) + serviceTotal;
 
-                    // 7. Atualiza o saldo no array de profissionais
                     professionals[professionalIndex].balance = newBalance;
 
-                    // 8. Atualiza o documento 'box' no Firestore
                     await updateDoc(boxDoc.ref, { professionals });
 
                     console.log(`Saldo atualizado para o profissional ID: ${professionalId}, Novo saldo: ${newBalance}`);
@@ -172,10 +164,9 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 }
             });
 
-            // Aguarda todas as atualizações de saldo
             await Promise.all(updates);
 
-            onComplete(); // Finaliza a venda
+            onComplete();
         } catch (error) {
             console.error("Erro ao adicionar venda: ", error);
         }
@@ -210,7 +201,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         setSelectedServices((prev) =>
             prev.map(s =>
                 s.id === serviceId
-                    ? { ...s, selectedProfessional: professionalId } // Atualiza o ID do profissional do serviço específico
+                    ? { ...s, selectedProfessional: professionalId } 
                     : s
             )
         );
@@ -230,7 +221,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         <div className={`modal-overlay modal-overlay-open`}>
             <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
                 <h2>Completar Venda</h2>
-                {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Renderiza a mensagem de erro se existir */}
+                {errorMessage && <p className="error-message">{errorMessage}</p>} 
                 <form onSubmit={handleSubmit}>
                     <label>Método de Pagamento:</label>
                     <select onChange={(e) => setSelectedPaymentMethod(e.target.value)} value={selectedPaymentMethod} required>
@@ -292,7 +283,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
 const EventComponent = ({ event }) => (
     <span>
-        {event.title}{event.serviceName}  {/* Exibe apenas o nome do cliente e o serviço */}
+        {event.title}{event.serviceName} 
     </span>
 );
 
@@ -399,7 +390,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     onSelectEvent={handleEventSelect}
                     components={{
                         resourceHeader: CustomResourceHeader,
-                        event: EventComponent  // Personaliza o conteúdo do evento
+                        event: EventComponent  
                     }}
                     onNavigate={handleNavigate}
                 />
@@ -459,7 +450,7 @@ const Calendario = ({ events, professionals = [] }) => {
                             onSelectEvent={handleEventSelect}
                             components={{
                                 resourceHeader: CustomResourceHeader,
-                                event: EventComponent  // Personaliza o conteúdo do evento
+                                event: EventComponent  
                             }}
                             onNavigate={handleNavigate}
                         />
