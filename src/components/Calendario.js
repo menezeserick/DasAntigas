@@ -69,7 +69,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
     const [selectedServices, setSelectedServices] = useState([]);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
     const [totalPrice, setTotalPrice] = useState(0);
-    const [errorMessage, setErrorMessage] = useState('');  
+    const [errorMessage, setErrorMessage] = useState('');
 
 
     useEffect(() => {
@@ -96,7 +96,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     );
                     return updatedServices;
                 } else {
-                    const newService = { ...service, quantity: 1, selectedProfessional: '' }; 
+                    const newService = { ...service, quantity: 1, selectedProfessional: '' };
                     return [...prev, newService];
                 }
             });
@@ -115,24 +115,48 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         }
 
         try {
+            const processedServices = selectedServices.map(service => {
+                const professionalName = professionals.find(prof => prof.id === service.selectedProfessional)?.title;
+
+                let comissao = 0;
+                let valorLiquido = service.price * service.quantity;
+                const originalSaleValue = valorLiquido;  
+
+                if (professionalName !== 'teste') {
+                    comissao = 0.45 * valorLiquido;
+                    valorLiquido = valorLiquido - comissao;
+                }
+
+                return {
+                    ...service,
+                    comissao,
+                    valorLiquido,
+                    originalSaleValue  
+                };
+            });
+
+            const totalPrice = processedServices.reduce((total, service) => total + (service.price * service.quantity), 0);
+            const netTotal = processedServices.reduce((total, service) => total + service.valorLiquido, 0);
+
             const vendaDoc = await addDoc(collection(db, "vendas"), {
                 event: selectedEvent,
-                services: selectedServices,
+                services: processedServices,
                 paymentMethod: selectedPaymentMethod,
                 totalPrice,
+                netTotal,  
             });
 
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
 
+            // Atualizar saldo dos profissionais
             const today = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
-            }).split('/').reverse().join('-'); 
+            }).split('/').reverse().join('-');
 
             const q = query(collection(db, "boxes"), where("date", "==", today));
-
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
@@ -140,23 +164,27 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 return;
             }
 
-            const boxDoc = querySnapshot.docs[0]; 
+            const boxDoc = querySnapshot.docs[0];
             const boxData = boxDoc.data();
-            const professionals = boxData.professionals || []; 
+            const professionalsData = boxData.professionals || [];
 
-            const updates = selectedServices.map(async (service) => {
-                const professionalId = service.selectedProfessional; 
-                const serviceTotal = service.price * service.quantity; 
+            const updates = processedServices.map(async (service) => {
+                const professionalId = service.selectedProfessional;
+                const serviceTotal = service.valorLiquido;  
 
-                const professionalIndex = professionals.findIndex(p => p.id === professionalId);
+                const professionalIndex = professionalsData.findIndex(p => p.id === professionalId);
 
                 if (professionalIndex !== -1) {
-                    const professional = professionals[professionalIndex];
+                    const professional = professionalsData[professionalIndex];
                     const newBalance = parseFloat(professional.balance) + serviceTotal;
 
-                    professionals[professionalIndex].balance = newBalance;
+                    professionalsData[professionalIndex].balance = newBalance;
 
-                    await updateDoc(boxDoc.ref, { professionals });
+                    if (professional.name !== 'teste') {
+                        professionalsData[professionalIndex].originalSaleValue = service.originalSaleValue;
+                    }
+
+                    await updateDoc(boxDoc.ref, { professionals: professionalsData });
 
                     console.log(`Saldo atualizado para o profissional ID: ${professionalId}, Novo saldo: ${newBalance}`);
                 } else {
@@ -201,7 +229,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         setSelectedServices((prev) =>
             prev.map(s =>
                 s.id === serviceId
-                    ? { ...s, selectedProfessional: professionalId } 
+                    ? { ...s, selectedProfessional: professionalId }
                     : s
             )
         );
@@ -221,7 +249,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         <div className={`modal-overlay modal-overlay-open`}>
             <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
                 <h2>Completar Venda</h2>
-                {errorMessage && <p className="error-message">{errorMessage}</p>} 
+                {errorMessage && <p className="error-message">{errorMessage}</p>}
                 <form onSubmit={handleSubmit}>
                     <label>Método de Pagamento:</label>
                     <select onChange={(e) => setSelectedPaymentMethod(e.target.value)} value={selectedPaymentMethod} required>
@@ -283,7 +311,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
 const EventComponent = ({ event }) => (
     <span>
-        {event.title}{event.serviceName} 
+        {event.title}{event.serviceName}
     </span>
 );
 
@@ -345,6 +373,10 @@ const Calendario = ({ events, professionals = [] }) => {
 
     return (
         <div className="calendar-layout">
+            <br></br>
+            <br></br>
+            <br></br>
+            <br></br>
             <div className="monthly-calendar">
                 <Calendar
                     localizer={localizer}
@@ -381,7 +413,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     defaultView="day"
                     date={selectedDate}
                     min={new Date(1970, 1, 1, 8, 0, 0)}
-                    max={new Date(1970, 1, 1, 22, 0, 0)}
+                    max={new Date(1970, 1, 1, 21, 0, 0)}
                     resources={professionals}
                     resourceAccessor="resourceId"
                     resourceIdAccessor="id"
@@ -390,7 +422,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     onSelectEvent={handleEventSelect}
                     components={{
                         resourceHeader: CustomResourceHeader,
-                        event: EventComponent  
+                        event: EventComponent
                     }}
                     onNavigate={handleNavigate}
                 />
@@ -408,6 +440,7 @@ const Calendario = ({ events, professionals = [] }) => {
             )}
 
             <div className='calendar-mobile'>
+                    <br></br>
                 <div className="monthly-calendar">
                     <Calendar
                         localizer={localizer}
@@ -441,7 +474,7 @@ const Calendario = ({ events, professionals = [] }) => {
                             defaultView="day"
                             date={selectedDate}
                             min={new Date(1970, 1, 1, 8, 0, 0)}
-                            max={new Date(1970, 1, 1, 22, 0, 0)}
+                            max={new Date(1970, 1, 1, 20, 0, 0)}
                             resources={professionals}
                             resourceAccessor="resourceId"
                             resourceIdAccessor="id"
@@ -450,7 +483,7 @@ const Calendario = ({ events, professionals = [] }) => {
                             onSelectEvent={handleEventSelect}
                             components={{
                                 resourceHeader: CustomResourceHeader,
-                                event: EventComponent  
+                                event: EventComponent
                             }}
                             onNavigate={handleNavigate}
                         />

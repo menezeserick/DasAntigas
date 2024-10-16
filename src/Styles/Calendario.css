@@ -366,4 +366,16 @@
         height: auto;
         max-height: 100vh;
     }
+
+    html{
+        overflow: hidden;
+      }
+}
+
+
+@media screen and (min-width: 1024px) and (max-width: 1024px) {
+    .monthly-calendar {
+        width: 200px;
+        margin-right: 20px;
+    }
 }
