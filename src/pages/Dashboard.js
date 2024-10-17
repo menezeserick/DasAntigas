@@ -358,7 +358,7 @@ const Dashboard = () => {
                                     <option key={index} value={time}>{time}</option>
                                 ))}
                             </select>
-                            <button type="button" onClick={handleAddTime}>Adicionar Horário</button>
+                            <button type="button" className="agendarbotao"onClick={handleAddTime}>Adicionar Horário</button>
 
                             <ul className="selected-times">
                                 {selectedTimes.map((time, index) => (
@@ -370,7 +370,7 @@ const Dashboard = () => {
                             </ul>
 
                             <button type="submit">Agendar</button>
-                            <button type="button" onClick={closeModal}>Fechar</button>
+                            <button type="button" className="fecharbotao" onClick={closeModal}>Fechar</button>
                         </form>
                     </div>
                 </div>
@@ -384,7 +384,7 @@ const Dashboard = () => {
                             <label>Nome do Profissional:</label>
                             <input type="text" name="professionalName" required />
                             <button type="submit">Adicionar</button>
-                            <button type="button" onClick={closeProfessionalModal}>Fechar</button>
+                            <button type="button" className="fecharbotao" onClick={closeProfessionalModal}>Fechar</button>
                         </form>
                     </div>
                 </div>
@@ -400,18 +400,18 @@ const Dashboard = () => {
                             <label>Preço do Serviço:</label>
                             <input type="number" step="0.01" name="servicePrice" required />
                             <button type="submit">Adicionar</button>
-                            <button type="button" onClick={closeServiceModal}>Fechar</button>
+                            <button type="button" className="fecharbotao" onClick={closeServiceModal}>Fechar</button>
                         </form>
                     </div>
                 </div>
             )}
+
             {modalRegisterBoxOpen && (
-                <div className="modal-overlay modal-overlay-open" onClick={closeRegisterBoxModal}>
-                    <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-overlay-caixa modal-overlay-caixa-open" onClick={closeRegisterBoxModal}>
+                    <div className="modal-caixa modal-caixa-open" onClick={(e) => e.stopPropagation()}>
                         <h2>Caixa</h2>
                         <h3>Valor atual no Caixa: R$ {boxValue.toFixed(2)}</h3>
 
-                        {/* Input para adicionar/remover valor personalizado */}
                         <div className="box-adjust">
                             <label>Valor para ajuste | para valores negativos inclua "-":</label>
                             <input
@@ -431,8 +431,7 @@ const Dashboard = () => {
                                 return (
                                     <li key={professional.id}>
                                         {professional.name}: R$ {professional.balance.toFixed(2)}
-                                        {/* Exibir mensagem adicional se não for Lucas ou Claudia */}
-                                        {!teste  && (
+                                        {!teste && (
                                             <span>
                                                 {' '} | Sem comissão: R$ {professional.originalSaleValue?.toFixed(2) || 'N/A'}
                                             </span>

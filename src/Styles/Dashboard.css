@@ -1,16 +1,17 @@
+/* General Modal Styles */
 .modal {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #A6A6A6;
-  padding: 20px;
-  border-radius: 8px;
-  width: 40%;
-  max-width: 500px;
-  max-height: 80vh;
+  background-color: #232323; /* Darker background for contrast */
+  padding: 25px;
+  border-radius: 10px;
+  width: 50%;
+  max-width: 600px;
+  max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Stronger shadow for depth */
   transition: all 0.3s ease-in-out;
   opacity: 0;
   visibility: hidden;
@@ -24,9 +25,16 @@
 }
 
 .modal h2 {
-  font-size: 18px;
-  margin-bottom: 20px;
-  color: #F2F2F2;
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #fff; /* White for better contrast on dark background */
+  text-align: center;
+}
+
+.modal h3 {
+  font-size: 16px;
+  color: #f2f2f2; /* Lighter gray for subheadings */
+  margin-bottom: 10px;
 }
 
 .modal form {
@@ -51,8 +59,8 @@
 
 .modal button {
   margin-top: 10px;
-  background-color: #737373;
-  color: #F2F2F2;
+  background-color: #00b300; /* Green button for adjustment */
+  color: #fff;
   padding: 10px;
   border: none;
   border-radius: 5px;
@@ -61,9 +69,10 @@
 }
 
 .modal button:hover {
-  background-color: #575757;
+  background-color: #008000; /* Darker green on hover */
 }
 
+/* Overlay Styles */
 .modal-overlay {
   background-color: rgba(0, 0, 0, 0.7);
   position: fixed;
@@ -153,5 +162,185 @@ ul.selected-times li button:hover {
   ul.selected-times li button {
     padding: 5px 10px;
     font-size: 12px;
+  }
+}
+
+button.fecharbotao {
+  background-color: #980101; /* Red for closing */
+  color: #fff;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+button.fecharbotao:hover {
+  background-color: #7b0303;
+}
+
+button.agendarbotao{
+  background-color: #3580dc; /* Red for closing */
+  color: #fff;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+button.agendarbotao:hover {
+  background-color: #3270bd;
+}
+
+
+/* Caixa Modal Custom Style */
+.modal-caixa {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #232323; /* Darker background for contrast */
+  padding: 25px;
+  border-radius: 10px;
+  width: 50%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Stronger shadow for depth */
+  transition: all 0.3s ease-in-out;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.modal-caixa-open {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  visibility: visible;
+}
+
+.modal-caixa h2 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #fff; /* White for better contrast on dark background */
+  text-align: center;
+}
+
+.modal-caixa h3 {
+  font-size: 16px;
+  color: #f2f2f2; /* Lighter gray for subheadings */
+  margin-bottom: 10px;
+}
+
+/* Styling for Caixa Input and Adjust Button */
+.modal-caixa .box-adjust label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #b3b3b3; /* Softer label color */
+  margin-bottom: 5px;
+  display: block;
+}
+
+.modal-caixa .box-adjust input {
+  width: 97%;
+  padding: 10px;
+  border: 1px solid #737373;
+  border-radius: 5px;
+  font-size: 14px;
+  color: #f2f2f2;
+  margin-bottom: 15px;
+}
+
+.modal-caixa .box-adjust button {
+  background-color: #00b300; /* Green button for adjustment */
+  color: #fff;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-caixa .box-adjust button:hover {
+  background-color: #008000; /* Darker green on hover */
+}
+
+/* List of Professional Balances */
+.modal-caixa ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.modal-caixa ul li {
+  font-size: 14px;
+  color: #e0e0e0;
+  padding: 10px;
+  border-bottom: 1px solid #444;
+}
+
+.modal-caixa ul li span {
+  font-size: 12px;
+  color: #b3b3b3;
+}
+
+/* Close Button for Caixa Modal */
+.modal-caixa button {
+  background-color: #dc3545; /* Red for closing */
+  color: #fff;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.modal-caixa button:hover {
+  background-color: #c82333;
+}
+
+/* Overlay for Caixa Modal */
+.modal-overlay-caixa {
+  background-color: rgba(0, 0, 0, 0.8); /* Slightly darker overlay */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  transition: opacity 0.3s ease-in-out;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.modal-overlay-caixa-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 768px) {
+  .modal-caixa {
+    width: 80%;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-caixa {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .modal-caixa h2 {
+    font-size: 18px;
+  }
+
+  .modal-caixa button {
+    font-size: 14px;
+    padding: 8px;
   }
 }

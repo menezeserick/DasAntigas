@@ -120,7 +120,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
                 let comissao = 0;
                 let valorLiquido = service.price * service.quantity;
-                const originalSaleValue = valorLiquido;  
+                const originalSaleValue = valorLiquido;
 
                 if (professionalName !== 'teste') {
                     comissao = 0.45 * valorLiquido;
@@ -131,7 +131,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     ...service,
                     comissao,
                     valorLiquido,
-                    originalSaleValue  
+                    originalSaleValue
                 };
             });
 
@@ -143,7 +143,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 services: processedServices,
                 paymentMethod: selectedPaymentMethod,
                 totalPrice,
-                netTotal,  
+                netTotal,
             });
 
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
@@ -170,7 +170,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
             const updates = processedServices.map(async (service) => {
                 const professionalId = service.selectedProfessional;
-                const serviceTotal = service.valorLiquido;  
+                const serviceTotal = service.valorLiquido;
 
                 const professionalIndex = professionalsData.findIndex(p => p.id === professionalId);
 
@@ -292,7 +292,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                                     <div className="service-controls">
                                         <button type="button" className="decrement-btn" onClick={() => handleDecrementService(service.id)}>-</button>
                                         <button type="button" className="increment-btn" onClick={() => handleIncrementService(service.id)}>+</button>
-                                        <button type="button" className="remove-btn" onClick={() => handleRemoveService(service.id)}>Remover</button>
+                                        <button type="button" className="fecharbotao" onClick={() => handleRemoveService(service.id)}>Remover</button>
                                     </div>
                                 </div>
                             </li>
@@ -302,7 +302,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     <p className="total-price">Total: R$ {totalPrice.toFixed(2)}</p>
 
                     <button type="submit">Finalizar Atendimento</button>
-                    <button type="button" onClick={onCancel}>Fechar</button>
+                    <button type="button" className="fecharbotao"onClick={onCancel}>Fechar</button>
                 </form>
             </div>
         </div>
@@ -377,7 +377,7 @@ const Calendario = ({ events, professionals = [] }) => {
     const handleNavigate = (newDate) => {
         setSelectedDate(newDate);
     };
-    
+
     return (
         <div className="calendar-layout">
             <br></br>
@@ -403,7 +403,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     resourceTitleAccessor="title"
                     className="calendar"
                     onNavigate={handleNavigate}
-                     selectable={true}  // Torna as células selecionáveis
+                    selectable={true}  // Torna as células selecionáveis
                     onSelectSlot={handleSelectSlot}  // Adiciona a função para selecionar a célula
                     components={{
                         event: () => null
@@ -458,7 +458,7 @@ const Calendario = ({ events, professionals = [] }) => {
             )}
 
             <div className='calendar-mobile'>
-                    <br></br>
+                <br></br>
                 <div className="monthly-calendar">
                     <Calendar
                         localizer={localizer}
@@ -478,6 +478,17 @@ const Calendario = ({ events, professionals = [] }) => {
                         resourceTitleAccessor="title"
                         className="calendar"
                         onNavigate={handleNavigate}
+                        selectable={true}  // Torna as células selecionáveis
+                        onSelectSlot={handleSelectSlot}  // Adiciona a função para selecionar a célula
+                        components={{
+                            event: () => null
+                        }}
+                        showAllEvents={true}
+                        eventPropGetter={() => ({
+                            style: {
+                                backgroundColor: '#007BFF',
+                            }
+                        })}
                     />
                     <div className="daily-calendar">
                         <Calendar
