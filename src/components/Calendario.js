@@ -356,6 +356,13 @@ const Calendario = ({ events, professionals = [] }) => {
         setIsCompleting(true);
     };
 
+    // Função para lidar com a seleção de uma célula no calendário
+    const handleSelectSlot = (slotInfo) => {
+        // Atualiza a data selecionada com o início do slot (célula)
+        setSelectedDate(slotInfo.start);
+        setSelectedEvent(null);  // Limpa o evento selecionado ao clicar em uma célula vazia
+    };
+
     const handleComplete = (completionData) => {
         console.log("Venda concluída:", completionData);
         setIsCompleting(false);
@@ -370,7 +377,7 @@ const Calendario = ({ events, professionals = [] }) => {
     const handleNavigate = (newDate) => {
         setSelectedDate(newDate);
     };
-
+    
     return (
         <div className="calendar-layout">
             <br></br>
@@ -396,6 +403,17 @@ const Calendario = ({ events, professionals = [] }) => {
                     resourceTitleAccessor="title"
                     className="calendar"
                     onNavigate={handleNavigate}
+                     selectable={true}  // Torna as células selecionáveis
+                    onSelectSlot={handleSelectSlot}  // Adiciona a função para selecionar a célula
+                    components={{
+                        event: () => null
+                    }}
+                    showAllEvents={true}
+                    eventPropGetter={() => ({
+                        style: {
+                            backgroundColor: '#007BFF',
+                        }
+                    })}
                 />
                 <DailySalesSummary selectedDate={selectedDate} />
             </div>
