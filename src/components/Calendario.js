@@ -302,7 +302,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     <p className="total-price">Total: R$ {totalPrice.toFixed(2)}</p>
 
                     <button type="submit">Finalizar Atendimento</button>
-                    <button type="button" className="fecharbotao"onClick={onCancel}>Fechar</button>
+                    <button type="button" className="fecharbotao" onClick={onCancel}>Fechar</button>
                 </form>
             </div>
         </div>
@@ -458,6 +458,9 @@ const Calendario = ({ events, professionals = [] }) => {
             )}
 
             <div className='calendar-mobile'>
+                <br></br>
+                <br></br>
+                <br></br>
                 <br></br>
                 <div className="monthly-calendar">
                     <Calendar

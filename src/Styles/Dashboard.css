@@ -245,11 +245,12 @@ button.agendarbotao:hover {
 }
 
 .modal-caixa .box-adjust input {
-  width: 97%;
+  width: 100%;
   padding: 10px;
   border: 1px solid #737373;
   border-radius: 5px;
   font-size: 14px;
+  background-color: #262626; /* Darker input background */
   color: #f2f2f2;
   margin-bottom: 15px;
 }
