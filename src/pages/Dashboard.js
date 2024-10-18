@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Calendario from '../components/Calendario';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
@@ -18,7 +18,14 @@ const Dashboard = () => {
     const [professionalBalances, setProfessionalBalances] = useState([]);
     const [selectedTimes, setSelectedTimes] = useState([]);
     const [boxValue, setBoxValue] = useState(0); // Estado para valor do caixa
-    const [adjustmentValue, setAdjustmentValue] = useState(''); // Estado para valor de ajuste
+    const [adjustmentValue, setAdjustmentValue] = useState('');
+    const [modalProductOpen, setModalProductOpen] = useState(false);
+    const [productName, setProductName] = useState('');
+    const [productCost, setProductCost] = useState('');
+    const [productSalePrice, setProductSalePrice] = useState('');
+    const [modalSalesDetailsOpen, setModalSalesDetailsOpen] = useState(false);
+    const [salesData, setSalesData] = useState([]);
+    const [productQuantity, setProductQuantity] = useState('');
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -33,13 +40,66 @@ const Dashboard = () => {
     const closeProfessionalModal = () => setModalProfessionalOpen(false);
     const openServiceModal = () => setModalServiceOpen(true);
     const closeServiceModal = () => setModalServiceOpen(false);
+    const openProductModal = () => setModalProductOpen(true);
+    const closeProductModal = () => setModalProductOpen(false);
+    const closeRegisterBoxModal = () => setModalRegisterBoxOpen(false);
+
 
     const openRegisterBoxModal = async () => {
         setModalRegisterBoxOpen(true);
         await handleOpenBox();
     };
 
-    const closeRegisterBoxModal = () => setModalRegisterBoxOpen(false);
+    const handleOpenSalesDetails = async () => {
+        try {
+            // Fechar o modal de caixa
+            closeRegisterBoxModal();
+
+            // Consultar o banco de dados para obter as vendas
+            const q = query(collection(db, "vendas"));
+            const querySnapshot = await getDocs(q);
+
+            const sales = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setSalesData(sales);
+            setModalSalesDetailsOpen(true); // Abrir o modal após carregar as vendas
+        } catch (error) {
+            console.error("Erro ao carregar vendas: ", error);
+        }
+    };
+
+    // Função para fechar o modal de vendas detalhadas
+    const closeSalesDetailsModal = () => {
+        setModalSalesDetailsOpen(false);
+    };
+
+    const handleAddProduct = async (e) => {
+        e.preventDefault();
+
+        if (!productName || !productCost || !productSalePrice || !productQuantity) {
+            alert("Por favor, preencha todos os campos.");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, "products"), {
+                name: productName,
+                costPrice: parseFloat(productCost),
+                salePrice: parseFloat(productSalePrice),
+                quantity: parseInt(productQuantity, 10)
+            });
+
+            // Limpar campos após salvar
+            setProductName('');
+            setProductCost('');
+            setProductSalePrice('');
+            setProductQuantity('');
+
+            closeProductModal();
+            console.log("Produto adicionado com sucesso.");
+        } catch (error) {
+            console.error("Erro ao adicionar produto: ", error);
+        }
+    };
 
     // Função para abrir o caixa e carregar o saldo do dia anterior
     const handleOpenBox = async () => {
@@ -81,8 +141,6 @@ const Dashboard = () => {
         }
     };
 
-    // Função para ajustar o saldo do caixa (adição ou subtração de valores personalizados)
-    // Função para ajustar o saldo do caixa (adição ou subtração de valores personalizados)
     const handleAdjustMoney = async () => {
         const valueToAdjust = parseFloat(adjustmentValue); // Pode ser positivo ou negativo
         if (isNaN(valueToAdjust)) {
@@ -317,6 +375,7 @@ const Dashboard = () => {
                 openProfessionalModal={openProfessionalModal}
                 openServiceModal={openServiceModal}
                 openRegisterBoxModal={openRegisterBoxModal}
+                openProductModal={openProductModal}
             />
 
 
@@ -358,7 +417,7 @@ const Dashboard = () => {
                                     <option key={index} value={time}>{time}</option>
                                 ))}
                             </select>
-                            <button type="button" className="agendarbotao"onClick={handleAddTime}>Adicionar Horário</button>
+                            <button type="button" className="agendarbotao" onClick={handleAddTime}>Adicionar Horário</button>
 
                             <ul className="selected-times">
                                 {selectedTimes.map((time, index) => (
@@ -406,6 +465,48 @@ const Dashboard = () => {
                 </div>
             )}
 
+            {modalProductOpen && (
+                <div className="modal-overlay modal-overlay-open" onClick={closeProductModal}>
+                    <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
+                        <h2>Adicionar Produto</h2>
+                        <form onSubmit={handleAddProduct}>
+                            <label>Nome do Produto:</label>
+                            <input
+                                type="text"
+                                value={productName}
+                                onChange={(e) => setProductName(e.target.value)}
+                                required
+                            />
+                            <label>Preço de Custo:</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={productCost}
+                                onChange={(e) => setProductCost(e.target.value)}
+                                required
+                            />
+                            <label>Valor de Venda:</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={productSalePrice}
+                                onChange={(e) => setProductSalePrice(e.target.value)}
+                                required
+                            />
+                            <label>Quantidade:</label>
+                            <input
+                                type="number"
+                                value={productQuantity}
+                                onChange={(e) => setProductQuantity(e.target.value)}
+                                required
+                            />
+                            <button type="submit">Adicionar</button>
+                            <button type="button" className="fecharbotao" onClick={closeProductModal}>Fechar</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {modalRegisterBoxOpen && (
                 <div className="modal-overlay-caixa modal-overlay-caixa-open" onClick={closeRegisterBoxModal}>
                     <div className="modal-caixa modal-caixa-open" onClick={(e) => e.stopPropagation()}>
@@ -440,7 +541,60 @@ const Dashboard = () => {
                                 );
                             })}
                         </ul>
+
+                        {/* Botão para abrir o modal de vendas detalhadas */}
+                        <button onClick={handleOpenSalesDetails}>Ver Vendas Detalhadas</button>
+
                         <button onClick={closeRegisterBoxModal}>Fechar</button>
+                    </div>
+                </div>
+            )}
+
+            {modalSalesDetailsOpen && (
+                <div className="modal-overlay-vendas" onClick={closeSalesDetailsModal}>
+                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                        <h2>Vendas Detalhadas</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Serviços</th>
+                                    <th>Produtos</th>
+                                    <th>Valor Total</th>
+                                    <th>Valor com Comissão</th>
+                                    <th>Método de Pagamento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {salesData.map((sale) => (
+                                    <tr key={sale.id}>
+                                        <td>{sale.event.title}</td>
+                                        <td>
+                                            {sale.services.map(service => (
+                                                <div key={service.id}>
+                                                    {service.name} - Quantidade: {service.quantity} - Valor: R$ {service.price.toFixed(2)}
+                                                    <br />
+                                                    Profissional: {service.professionalName} - Valor Recebido: R$ {service.valorLiquido.toFixed(2)}
+                                                </div>
+                                            ))}
+                                        </td>
+                                        <td>
+                                            {sale.products.map(product => (
+                                                <div key={product.id}>
+                                                    {product.name} - Quantidade: {product.quantity} - Valor: R$ {product.salePrice.toFixed(2)}
+                                                    <br />
+                                                    Profissional: {product.professionalName} - Valor Recebido: R$ {product.valorLiquido.toFixed(2)}
+                                                </div>
+                                            ))}
+                                        </td>
+                                        <td>R$ {sale.totalPrice.toFixed(2)}</td>
+                                        <td>R$ {sale.netTotal.toFixed(2)}</td>
+                                        <td>{sale.paymentMethod}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button onClick={closeSalesDetailsModal}>Fechar</button>
                     </div>
                 </div>
             )}

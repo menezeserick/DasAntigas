@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../Styles/Header.css';
 
-const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, openRegisterBoxModal }) => {
+const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, openRegisterBoxModal, openProductModal }) => {
     const [menuOpen, setMenuOpen] = useState(false);
 
     const toggleMenu = () => {
@@ -29,6 +29,11 @@ const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, op
         openRegisterBoxModal(); // Abre o modal do caixa
     };
 
+    const handleOpenProductModal = () => {
+        setMenuOpen(false);  // Fecha o menu
+        openProductModal(); // Abre o modal de adicionar produto
+    }
+
     return (
         <header className="dashboard-header">
             <div className="logo-container">
@@ -48,6 +53,7 @@ const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, op
                 <button className="action-btn" onClick={handleOpenScheduleModal}>Agendar Cliente</button>
                 <button className="action-btn" onClick={handleOpenProfessionalModal}>Adicionar Profissional</button>
                 <button className="action-btn" onClick={handleOpenServiceModal}>Adicionar Serviço</button>
+                <button className="action-btn" onClick={handleOpenProductModal}>Adicionar Produto</button>
                 <button className="action-btn" onClick={handleOpenRegisterBoxModal}>Caixa</button>
             </div>
         </header>

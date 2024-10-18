@@ -68,6 +68,8 @@ const DailySalesSummary = ({ selectedDate }) => {
 const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComplete, onCancel, services }) => {
     const [selectedServices, setSelectedServices] = useState([]);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [products, setProducts] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [errorMessage, setErrorMessage] = useState('');
 
@@ -78,10 +80,29 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         }
     }, [paymentMethods]);
 
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "products"));
+                const fetchedProducts = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+                setProducts(fetchedProducts);
+            } catch (error) {
+                console.error("Erro ao buscar produtos: ", error);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
+
     const calculateTotalPrice = useCallback(() => {
-        const total = selectedServices.reduce((total, service) => total + (service.price * service.quantity), 0);
-        setTotalPrice(total);
-    }, [selectedServices]);
+        const serviceTotal = selectedServices.reduce((total, service) => total + (service.price * service.quantity), 0);
+        const productTotal = selectedProducts.reduce((total, product) => total + (product.salePrice * product.quantity), 0);
+        setTotalPrice(serviceTotal + productTotal);
+    }, [selectedServices, selectedProducts]);
 
     const handleServiceChange = (serviceId) => {
         const service = services.find(s => s.id === serviceId);
@@ -103,6 +124,26 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         }
     };
 
+    const handleProductChange = (productId) => {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+            setSelectedProducts((prev) => {
+                const existingProduct = prev.find(p => p.id === product.id);
+                if (existingProduct) {
+                    const updatedProducts = prev.map(p =>
+                        p.id === product.id
+                            ? { ...p, quantity: p.quantity + 1 }
+                            : p
+                    );
+                    return updatedProducts;
+                } else {
+                    const newProduct = { ...product, quantity: 1 };
+                    return [...prev, newProduct];
+                }
+            });
+        }
+    };
+
     const handleAddCompletion = async (e) => {
         e.preventDefault();
 
@@ -115,32 +156,72 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         }
 
         try {
+            // Verifica se há serviços ou produtos selecionados
+            if (selectedServices.length === 0 && selectedProducts.length === 0) {
+                setErrorMessage('Pelo menos um serviço ou produto deve ser selecionado para completar a venda.');
+                return;
+            }
+
+            // Processamento dos serviços (se houver)
             const processedServices = selectedServices.map(service => {
-                const professionalName = professionals.find(prof => prof.id === service.selectedProfessional)?.title;
+                const professional = professionals.find(prof => prof.id === service.selectedProfessional);
+                const professionalName = professional?.title;
 
                 let comissao = 0;
                 let valorLiquido = service.price * service.quantity;
                 const originalSaleValue = valorLiquido;
 
                 if (professionalName !== 'teste') {
-                    comissao = 0.45 * valorLiquido;
-                    valorLiquido = valorLiquido - comissao;
+                    comissao = 0.45 * valorLiquido; // Aplicar comissão de 45%
+                    valorLiquido -= comissao; // Valor líquido após comissão
                 }
 
                 return {
                     ...service,
                     comissao,
                     valorLiquido,
-                    originalSaleValue
+                    originalSaleValue, // Valor sem a comissão
+                    professionalId: service.selectedProfessional,
+                    professionalName: professionalName // Adiciona o nome do profissional
                 };
             });
 
-            const totalPrice = processedServices.reduce((total, service) => total + (service.price * service.quantity), 0);
-            const netTotal = processedServices.reduce((total, service) => total + service.valorLiquido, 0);
+            // Processamento dos produtos (se houver)
+            const processedProducts = selectedProducts.map(product => {
+                const professionalName = professionals.find(prof => prof.id === product.selectedProfessional)?.title;
 
+                let comissao = 0;
+                let valorLiquido = product.salePrice * product.quantity;
+                const originalSaleValue = valorLiquido; // Valor sem comissão
+
+                if (professionalName !== 'teste') {
+                    comissao = 0.15 * valorLiquido; // Aplicar comissão de 15%
+                    valorLiquido -= comissao; // Valor líquido após comissão
+                }
+
+                return {
+                    ...product,
+                    valorTotal: product.salePrice * product.quantity,
+                    comissao,
+                    valorLiquido,
+                    originalSaleValue, // Valor sem a comissão
+                    professionalId: product.selectedProfessional,
+                    professionalName: professionalName
+                };
+            });
+
+            // Cálculo do valor total e líquido da venda
+            const totalPrice = processedServices.reduce((total, service) => total + (service.price * service.quantity), 0)
+                + processedProducts.reduce((total, product) => total + (product.salePrice * product.quantity), 0);
+
+            const netTotal = processedServices.reduce((total, service) => total + service.valorLiquido, 0)
+                + processedProducts.reduce((total, product) => total + product.valorLiquido, 0);
+
+            // Registrar venda no banco de dados
             const vendaDoc = await addDoc(collection(db, "vendas"), {
                 event: selectedEvent,
                 services: processedServices,
+                products: processedProducts,
                 paymentMethod: selectedPaymentMethod,
                 totalPrice,
                 netTotal,
@@ -148,7 +229,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
 
-            // Atualizar saldo dos profissionais
+            // Atualizar saldo dos profissionais no caixa
             const today = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric',
@@ -168,21 +249,45 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             const boxData = boxDoc.data();
             const professionalsData = boxData.professionals || [];
 
-            const updates = processedServices.map(async (service) => {
-                const professionalId = service.selectedProfessional;
-                const serviceTotal = service.valorLiquido;
+            // Agrupar serviços e produtos por profissional
+            const professionalBalances = {};
 
+            // Somar os valores dos serviços para cada profissional
+            processedServices.forEach(service => {
+                const professionalId = service.professionalId;
+                if (!professionalBalances[professionalId]) {
+                    professionalBalances[professionalId] = {
+                        total: 0,
+                        originalSaleValue: 0, // Inicializa o valor original
+                    };
+                }
+                professionalBalances[professionalId].total += service.valorLiquido; // Valor com comissão
+                professionalBalances[professionalId].originalSaleValue += service.originalSaleValue; // Valor sem comissão
+            });
+
+            // Somar os valores dos produtos para cada profissional
+            processedProducts.forEach(product => {
+                const professionalId = product.professionalId;
+                if (!professionalBalances[professionalId]) {
+                    professionalBalances[professionalId] = {
+                        total: 0,
+                        originalSaleValue: 0,
+                    };
+                }
+                professionalBalances[professionalId].total += product.valorLiquido; // Valor com comissão
+                professionalBalances[professionalId].originalSaleValue += product.valorTotal; // Valor sem comissão
+            });
+
+            // Atualizar o saldo de cada profissional
+            const updateBalances = Object.keys(professionalBalances).map(async professionalId => {
                 const professionalIndex = professionalsData.findIndex(p => p.id === professionalId);
-
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
-                    const newBalance = parseFloat(professional.balance) + serviceTotal;
+                    const newBalance = parseFloat(professional.balance) + professionalBalances[professionalId].total;
 
+                    // Somar os valores sem comissão ao invés de sobrescrever
                     professionalsData[professionalIndex].balance = newBalance;
-
-                    if (professional.name !== 'teste') {
-                        professionalsData[professionalIndex].originalSaleValue = service.originalSaleValue;
-                    }
+                    professionalsData[professionalIndex].originalSaleValue = (professional.originalSaleValue || 0) + professionalBalances[professionalId].originalSaleValue;
 
                     await updateDoc(boxDoc.ref, { professionals: professionalsData });
 
@@ -192,7 +297,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 }
             });
 
-            await Promise.all(updates);
+            await Promise.all(updateBalances);
 
             onComplete();
         } catch (error) {
@@ -203,6 +308,30 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
     const handleRemoveService = (serviceId) => {
         setSelectedServices((prev) => prev.filter(s => s.id !== serviceId));
+    };
+
+    const handleRemoveProduct = (productId) => {
+        setSelectedProducts((prev) => prev.filter(p => p.id !== productId));
+    };
+
+    const handleIncrementProduct = (productId) => {
+        setSelectedProducts((prev) => {
+            return prev.map(p =>
+                p.id === productId
+                    ? { ...p, quantity: p.quantity + 1 }
+                    : p
+            );
+        });
+    };
+
+    const handleDecrementProduct = (productId) => {
+        setSelectedProducts((prev) => {
+            return prev.map(p =>
+                p.id === productId
+                    ? { ...p, quantity: p.quantity > 1 ? p.quantity - 1 : 1 }
+                    : p
+            );
+        });
     };
 
     const handleIncrementService = (serviceId) => {
@@ -235,6 +364,16 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         );
     };
 
+    const handleProductProfessionalChange = (productId, professionalId) => {
+        setSelectedProducts((prev) =>
+            prev.map(p =>
+                p.id === productId
+                    ? { ...p, selectedProfessional: professionalId }
+                    : p
+            )
+        );
+    };
+
 
     useEffect(() => {
         calculateTotalPrice();
@@ -260,7 +399,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     </select>
 
                     <label>Serviços:</label>
-                    <select onChange={(e) => handleServiceChange(e.target.value)} required>
+                    <select onChange={(e) => handleServiceChange(e.target.value)}>
                         <option value="">Selecione um serviço</option>
                         {services.map(service => (
                             <option key={service.id} value={service.id}>
@@ -293,6 +432,47 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                                         <button type="button" className="decrement-btn" onClick={() => handleDecrementService(service.id)}>-</button>
                                         <button type="button" className="increment-btn" onClick={() => handleIncrementService(service.id)}>+</button>
                                         <button type="button" className="fecharbotao" onClick={() => handleRemoveService(service.id)}>Remover</button>
+                                    </div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+
+
+                    <label>Produtos:</label>
+                    <select onChange={(e) => handleProductChange(e.target.value)}>
+                        <option value="">Selecione um produto</option>
+                        {products.map(product => (
+                            <option key={product.id} value={product.id}>
+                                {product.name} - R$ {product.salePrice.toFixed(2)}
+                            </option>
+                        ))}
+                    </select>
+
+                    <ul className="selected-services-list">
+                        {selectedProducts.map(product => (
+                            <li key={product.id} className="service-item">
+                                <div className="service-info">
+                                    <div className="service-details">
+                                        <span>{product.name} - R$ {product.salePrice.toFixed(2)} x {product.quantity}</span>
+
+                                        <label>Profissional:</label>
+                                        <select
+                                            onChange={(e) => handleProductProfessionalChange(product.id, e.target.value)}
+                                            value={product.selectedProfessional}
+                                            required
+                                        >
+                                            <option value="">Selecione um profissional</option>
+                                            {professionals.map(professional => (
+                                                <option key={professional.id} value={professional.id}>{professional.title}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="service-controls">
+                                        <button type="button" className="decrement-btn" onClick={() => handleDecrementProduct(product.id)}>-</button>
+                                        <button type="button" className="increment-btn" onClick={() => handleIncrementProduct(product.id)}>+</button>
+                                        <button type="button" className="fecharbotao" onClick={() => handleRemoveProduct(product.id)}>Remover</button>
                                     </div>
                                 </div>
                             </li>
@@ -458,8 +638,6 @@ const Calendario = ({ events, professionals = [] }) => {
             )}
 
             <div className='calendar-mobile'>
-                <br></br>
-                <br></br>
                 <br></br>
                 <br></br>
                 <div className="monthly-calendar">
