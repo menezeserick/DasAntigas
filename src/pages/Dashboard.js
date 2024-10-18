@@ -543,8 +543,8 @@ const Dashboard = () => {
                         </ul>
 
                         {/* Botão para abrir o modal de vendas detalhadas */}
-                        <button onClick={handleOpenSalesDetails}>Ver Vendas Detalhadas</button>
-
+                        <button id="detalhebotao"onClick={handleOpenSalesDetails}>Ver Vendas Detalhadas</button>
+                        <br></br>
                         <button onClick={closeRegisterBoxModal}>Fechar</button>
                     </div>
                 </div>
