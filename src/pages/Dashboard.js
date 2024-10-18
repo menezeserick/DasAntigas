@@ -5,6 +5,7 @@ import { db } from '../firebaseConfig';
 import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
 import Header from '../components/Header';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const Dashboard = () => {
     const [events, setEvents] = useState([]);
@@ -26,12 +27,23 @@ const Dashboard = () => {
     const [modalSalesDetailsOpen, setModalSalesDetailsOpen] = useState(false);
     const [salesData, setSalesData] = useState([]);
     const [productQuantity, setProductQuantity] = useState('');
+    const [stockData, setStockData] = useState([]);
+    const [isModalStockDetailsOpen, setModalStockDetailsOpen] = useState(false);  // Default to closed
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
         professional: '',
         date: '',
         time: ''
+    });
+
+    const [isEditProductModalOpen, setEditProductModalOpen] = useState(false);
+    const [editProductData, setEditProductData] = useState({
+        id: '',
+        name: '',
+        costPrice: '',
+        salePrice: '',
+        stock: ''
     });
 
     const openModal = () => setModalIsOpen(true);
@@ -45,10 +57,90 @@ const Dashboard = () => {
     const closeRegisterBoxModal = () => setModalRegisterBoxOpen(false);
 
 
+    const handleEditProduct = (product) => {
+        closeStockDetailsModal();
+
+        setEditProductData({
+            id: product.id,
+            name: product.name,
+            costPrice: product.costPrice,
+            salePrice: product.salePrice,
+            stock: product.stock
+        });
+        setEditProductModalOpen(true);
+    };
+
     const openRegisterBoxModal = async () => {
         setModalRegisterBoxOpen(true);
         await handleOpenBox();
     };
+
+    const handleOpenStockDetails = async () => {
+        try {
+            // Consultar o banco de dados para obter os produtos do estoque
+            const q = query(collection(db, "products"));
+            const querySnapshot = await getDocs(q);
+
+            const products = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(products);
+            setStockData(products); // Definir os dados do estoque
+            setModalStockDetailsOpen(true); // Abrir o modal
+        } catch (error) {
+            console.error("Erro ao carregar o estoque: ", error);
+        }
+    };
+
+    // Função para fechar o modal de estoque
+    const closeStockDetailsModal = () => {
+        setModalStockDetailsOpen(false);
+    };
+
+    const handleUpdateProduct = async (e) => {
+        e.preventDefault();
+    
+        const { id, name, costPrice, salePrice, stock } = editProductData;
+    
+        try {
+            await updateDoc(doc(db, "products", id), {
+                name,
+                costPrice: parseFloat(costPrice),
+                salePrice: parseFloat(salePrice),
+                stock: parseInt(stock, 10)
+            });
+    
+            // Atualizar os dados na tabela
+            setStockData(stockData.map(product => 
+                product.id === id ? { ...product, name, costPrice: parseFloat(costPrice), salePrice: parseFloat(salePrice), stock: parseInt(stock, 10) } : product
+            ));
+    
+            // Limpar campos e fechar modal de edição
+            setEditProductModalOpen(false);
+            setEditProductData({ id: '', name: '', costPrice: '', salePrice: '', stock: '' });
+    
+            // Reabrir o modal de estoque
+            handleOpenStockDetails(); // Chama a função que abre o modal de estoque
+    
+            console.log("Produto atualizado com sucesso.");
+        } catch (error) {
+            console.error("Erro ao atualizar produto: ", error);
+        }
+    };
+
+    const handleDeleteProduct = async (productId) => {
+        const confirmDelete = window.confirm("Você tem certeza que deseja excluir este produto?");
+        if (confirmDelete) {
+            try {
+                await deleteDoc(doc(db, "products", productId)); // Exclui o produto
+                // Atualizar a lista de produtos no estado
+                setStockData(stockData.filter(product => product.id !== productId));
+                console.log("Produto excluído com sucesso");
+            } catch (error) {
+                console.error("Erro ao excluir produto: ", error);
+            }
+        }
+    };
+    
+    
 
     const handleOpenSalesDetails = async () => {
         try {
@@ -85,7 +177,7 @@ const Dashboard = () => {
                 name: productName,
                 costPrice: parseFloat(productCost),
                 salePrice: parseFloat(productSalePrice),
-                quantity: parseInt(productQuantity, 10)
+                stock: parseInt(productQuantity, 10)
             });
 
             // Limpar campos após salvar
@@ -501,7 +593,88 @@ const Dashboard = () => {
                                 required
                             />
                             <button type="submit">Adicionar</button>
+                            <button id="detalhebotao" type="button" onClick={handleOpenStockDetails}>Ver Produtos</button>
                             <button type="button" className="fecharbotao" onClick={closeProductModal}>Fechar</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {isModalStockDetailsOpen && (
+                <div className="modal-overlay-vendas" onClick={closeStockDetailsModal}>
+                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                        <h2>Estoque de Produtos</h2>
+                        {stockData && stockData.length > 0 ? (
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nome do Produto</th>
+                                        <th>Preço de Venda</th>
+                                        <th>Preço de Custo</th>
+                                        <th>Estoque Disponível</th>
+                                        <th>Ações</th> {/* Nova coluna para Ações */}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {stockData.map((product) => (
+                                        <tr key={product.id}>
+                                            <td>{product.name}</td>
+                                            <td>{Number.isFinite(product.salePrice) ? `R$ ${product.salePrice.toFixed(2)}` : 'N/A'}</td>
+                                            <td>{Number.isFinite(product.costPrice) ? `R$ ${product.costPrice.toFixed(2)}` : 'N/A'}</td>
+                                            <td>{Number.isFinite(product.stock) ? product.stock : '-'}</td>
+                                            <td>
+                                                <FaEdit onClick={() => handleEditProduct(product)} style={{ cursor: 'pointer', marginRight: '10px' }} />
+                                                <FaTrash onClick={() => handleDeleteProduct(product.id)} style={{ cursor: 'pointer', color: 'red' }} />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <p>Nenhum dado de estoque disponível.</p>
+                        )}
+                        <button onClick={closeStockDetailsModal}>Fechar</button>
+                    </div>
+                </div>
+            )}
+
+            {isEditProductModalOpen && (
+                <div className="modal-overlay modal-overlay-open" onClick={() => setEditProductModalOpen(false)}>
+                    <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
+                        <h2>Editar Produto</h2>
+                        <form onSubmit={handleUpdateProduct}>
+                            <label>Nome do Produto:</label>
+                            <input
+                                type="text"
+                                value={editProductData.name}
+                                onChange={(e) => setEditProductData({ ...editProductData, name: e.target.value })}
+                                required
+                            />
+                            <label>Preço de Custo:</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={editProductData.costPrice}
+                                onChange={(e) => setEditProductData({ ...editProductData, costPrice: e.target.value })}
+                                required
+                            />
+                            <label>Preço de Venda:</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={editProductData.salePrice}
+                                onChange={(e) => setEditProductData({ ...editProductData, salePrice: e.target.value })}
+                                required
+                            />
+                            <label>Estoque:</label>
+                            <input
+                                type="number"
+                                value={editProductData.stock}
+                                onChange={(e) => setEditProductData({ ...editProductData, stock: e.target.value })}
+                                required
+                            />
+                            <button type="submit">Salvar</button>
+                            <button type="button" className="fecharbotao" onClick={() => setEditProductModalOpen(false)}>Fechar</button>
                         </form>
                     </div>
                 </div>
@@ -542,8 +715,7 @@ const Dashboard = () => {
                             })}
                         </ul>
 
-                        {/* Botão para abrir o modal de vendas detalhadas */}
-                        <button id="detalhebotao"onClick={handleOpenSalesDetails}>Ver Vendas Detalhadas</button>
+                        <button id="detalhebotao" onClick={handleOpenSalesDetails}>Ver Vendas Detalhadas</button>
                         <br></br>
                         <button onClick={closeRegisterBoxModal}>Fechar</button>
                     </div>
@@ -566,32 +738,34 @@ const Dashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {salesData.map((sale) => (
-                                    <tr key={sale.id}>
-                                        <td>{sale.event.title}</td>
-                                        <td>
-                                            {sale.services.map(service => (
-                                                <div key={service.id}>
-                                                    {service.name} - Quantidade: {service.quantity} - Valor: R$ {service.price.toFixed(2)}
-                                                    <br />
-                                                    Profissional: {service.professionalName} - Valor Recebido: R$ {service.valorLiquido.toFixed(2)}
-                                                </div>
-                                            ))}
-                                        </td>
-                                        <td>
-                                            {sale.products.map(product => (
-                                                <div key={product.id}>
-                                                    {product.name} - Quantidade: {product.quantity} - Valor: R$ {product.salePrice.toFixed(2)}
-                                                    <br />
-                                                    Profissional: {product.professionalName} - Valor Recebido: R$ {product.valorLiquido.toFixed(2)}
-                                                </div>
-                                            ))}
-                                        </td>
-                                        <td>R$ {sale.totalPrice.toFixed(2)}</td>
-                                        <td>R$ {sale.netTotal.toFixed(2)}</td>
-                                        <td>{sale.paymentMethod}</td>
-                                    </tr>
-                                ))}
+                                {salesData
+                                    .sort((a, b) => new Date(b.start) - new Date(a.start))
+                                    .map((sale) => (
+                                        <tr key={sale.id}>
+                                            <td>{sale.event.title || "Cliente Desconhecido"}</td>
+                                            <td>
+                                                {sale.services.map(service => (
+                                                    <div key={service.id}>
+                                                        {service.name} - Quantidade: {service.quantity} - Valor: R$ {service.price.toFixed(2)}
+                                                        <br />
+                                                        Profissional: {service.professionalName} - Valor Recebido: R$ {service.valorLiquido.toFixed(2)}
+                                                    </div>
+                                                ))}
+                                            </td>
+                                            <td>
+                                                {sale.products.map(product => (
+                                                    <div key={product.id}>
+                                                        {product.name} - Quantidade: {product.quantity} - Valor: R$ {product.salePrice.toFixed(2)}
+                                                        <br />
+                                                        Profissional: {product.professionalName} - Valor Recebido: R$ {product.valorLiquido.toFixed(2)}
+                                                    </div>
+                                                ))}
+                                            </td>
+                                            <td>R$ {sale.totalPrice.toFixed(2)}</td>
+                                            <td>R$ {sale.netTotal.toFixed(2)}</td>
+                                            <td>{sale.paymentMethod}</td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                         <button onClick={closeSalesDetailsModal}>Fechar</button>

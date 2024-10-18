@@ -146,22 +146,22 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
     const handleAddCompletion = async (e) => {
         e.preventDefault();
-    
+
         const eventDate = moment(selectedEvent.start).format('YYYY-MM-DD');
         const today = moment().format('YYYY-MM-DD');
-    
+
         if (eventDate !== today) {
             setErrorMessage('As vendas só podem ser concluídas no mesmo dia do agendamento.');
             return;
         }
-    
+
         try {
             // Verifica se há serviços ou produtos selecionados
             if (selectedServices.length === 0 && selectedProducts.length === 0) {
                 setErrorMessage('Pelo menos um serviço ou produto deve ser selecionado para completar a venda.');
                 return;
             }
-    
+
             // Verifica se os produtos possuem estoque suficiente
             for (const product of selectedProducts) {
                 if (product.quantity > product.stock || product.stock === 0) {
@@ -169,21 +169,21 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     return;
                 }
             }
-    
+
             // Processamento dos serviços (se houver)
             const processedServices = selectedServices.map(service => {
                 const professional = professionals.find(prof => prof.id === service.selectedProfessional);
                 const professionalName = professional?.title;
-    
+
                 let comissao = 0;
                 let valorLiquido = service.price * service.quantity;
                 const originalSaleValue = valorLiquido;
-    
+
                 if (professionalName !== 'teste') {
                     comissao = 0.45 * valorLiquido; // Aplicar comissão de 45%
                     valorLiquido -= comissao; // Valor líquido após comissão
                 }
-    
+
                 return {
                     ...service,
                     comissao,
@@ -193,24 +193,31 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     professionalName: professionalName // Adiciona o nome do profissional
                 };
             });
-    
+
             // Processamento dos produtos (se houver)
             const processedProducts = [];
             for (const product of selectedProducts) {
                 const professionalName = professionals.find(prof => prof.id === product.selectedProfessional)?.title;
-    
+
                 let comissao = 0;
                 let valorLiquido = product.salePrice * product.quantity;
                 const originalSaleValue = valorLiquido; // Valor sem comissão
-    
+
                 if (professionalName !== 'teste') {
                     comissao = 0.15 * valorLiquido; // Aplicar comissão de 15%
                     valorLiquido -= comissao; // Valor líquido após comissão
                 }
-    
+
                 const newStock = product.stock - product.quantity;
-                await updateDoc(doc(db, "products", product.id), { stock: newStock });
-    
+
+                // Atualiza o estoque do produto corretamente
+                if (newStock >= 0) { // Verifica se há estoque suficiente antes de atualizar
+                    await updateDoc(doc(db, "products", product.id), { stock: newStock });
+                } else {
+                    setErrorMessage(`O produto "${product.name}" não possui estoque suficiente. Estoque disponível: ${product.stock}`);
+                    return; // Sai da função se o estoque não for suficiente
+                }
+
                 processedProducts.push({
                     ...product,
                     valorTotal: product.salePrice * product.quantity,
@@ -221,14 +228,14 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     professionalName: professionalName
                 });
             }
-    
+
             // Cálculo do valor total e líquido da venda
             const totalPrice = processedServices.reduce((total, service) => total + (service.price * service.quantity), 0)
                 + processedProducts.reduce((total, product) => total + (product.salePrice * product.quantity), 0);
-    
+
             const netTotal = processedServices.reduce((total, service) => total + service.valorLiquido, 0)
                 + processedProducts.reduce((total, product) => total + product.valorLiquido, 0);
-    
+
             // Registrar venda no banco de dados
             const vendaDoc = await addDoc(collection(db, "vendas"), {
                 event: selectedEvent,
@@ -238,9 +245,9 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 totalPrice,
                 netTotal,
             });
-    
+
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
-    
+
             // Atualizar saldo dos profissionais no caixa
             const today = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
@@ -248,22 +255,22 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 month: '2-digit',
                 day: '2-digit',
             }).split('/').reverse().join('-');
-    
+
             const q = query(collection(db, "boxes"), where("date", "==", today));
             const querySnapshot = await getDocs(q);
-    
+
             if (querySnapshot.empty) {
                 console.error(`Nenhum caixa foi encontrado para a data: ${today}`);
                 return;
             }
-    
+
             const boxDoc = querySnapshot.docs[0];
             const boxData = boxDoc.data();
             const professionalsData = boxData.professionals || [];
-    
+
             // Agrupar serviços e produtos por profissional
             const professionalBalances = {};
-    
+
             // Somar os valores dos serviços para cada profissional
             processedServices.forEach(service => {
                 const professionalId = service.professionalId;
@@ -276,7 +283,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 professionalBalances[professionalId].total += service.valorLiquido; // Valor com comissão
                 professionalBalances[professionalId].originalSaleValue += service.originalSaleValue; // Valor sem comissão
             });
-    
+
             // Somar os valores dos produtos para cada profissional
             processedProducts.forEach(product => {
                 const professionalId = product.professionalId;
@@ -289,32 +296,32 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 professionalBalances[professionalId].total += product.valorLiquido; // Valor com comissão
                 professionalBalances[professionalId].originalSaleValue += product.valorTotal; // Valor sem comissão
             });
-    
+
             // Atualizar o saldo de cada profissional
             for (const professionalId of Object.keys(professionalBalances)) {
                 const professionalIndex = professionalsData.findIndex(p => p.id === professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
                     const newBalance = parseFloat(professional.balance) + professionalBalances[professionalId].total;
-    
+
                     // Somar os valores sem comissão ao invés de sobrescrever
                     professionalsData[professionalIndex].balance = newBalance;
                     professionalsData[professionalIndex].originalSaleValue = (professional.originalSaleValue || 0) + professionalBalances[professionalId].originalSaleValue;
-    
+
                     await updateDoc(boxDoc.ref, { professionals: professionalsData });
-    
+
                     console.log(`Saldo atualizado para o profissional ID: ${professionalId}, Novo saldo: ${newBalance}`);
                 } else {
                     console.error(`Profissional com ID ${professionalId} não encontrado no array de profissionais.`);
                 }
             }
-    
+
             onComplete();
         } catch (error) {
             console.error("Erro ao adicionar venda: ", error);
         }
     };
-    
+
 
     const handleRemoveService = (serviceId) => {
         setSelectedServices((prev) => prev.filter(s => s.id !== serviceId));

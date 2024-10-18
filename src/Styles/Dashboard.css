@@ -297,6 +297,15 @@ button.agendarbotao:hover {
 .modal-caixa #detalhebotao:hover {
   background-color: #3270bd; /* Cor azul escura ao passar o mouse */
 }
+
+.modal-open #detalhebotao {
+  background-color: #3580dc; /* Cor azul desejada */
+  color: #fff;
+}
+
+.modal-open #detalhebotao:hover {
+  background-color: #3270bd; /* Cor azul escura ao passar o mouse */
+}
 /* Close Button for Caixa Modal */
 .modal-caixa button {
   background-color: #dc3545; /* Red for closing */

@@ -51,9 +51,9 @@ const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, op
 
             <div className={`header-actions ${menuOpen ? 'active' : ''}`}>
                 <button className="action-btn" onClick={handleOpenScheduleModal}>Agendar Cliente</button>
-                <button className="action-btn" onClick={handleOpenProfessionalModal}>Adicionar Profissional</button>
-                <button className="action-btn" onClick={handleOpenServiceModal}>Adicionar Serviço</button>
-                <button className="action-btn" onClick={handleOpenProductModal}>Adicionar Produto</button>
+                <button className="action-btn" onClick={handleOpenProfessionalModal}>Profissionais</button>
+                <button className="action-btn" onClick={handleOpenServiceModal}>Serviços</button>
+                <button className="action-btn" onClick={handleOpenProductModal}>Produtos</button>
                 <button className="action-btn" onClick={handleOpenRegisterBoxModal}>Caixa</button>
             </div>
         </header>
