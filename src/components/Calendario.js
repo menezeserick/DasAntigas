@@ -405,6 +405,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         <div className={`modal-overlay modal-overlay-open`}>
             <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
                 <h2>Completar Venda</h2>
+                {selectedEvent && <h2 className="event-title">{selectedEvent.title}</h2>}
                 {errorMessage && <p className="error-message">{errorMessage}</p>}
                 <form onSubmit={handleSubmit}>
                     <label>Método de Pagamento:</label>

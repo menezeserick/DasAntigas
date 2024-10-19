@@ -16,6 +16,7 @@
   opacity: 0;
   visibility: hidden;
   transform: translate(-50%, -50%) scale(0.9);
+  z-index: 1001;
 }
 
 .modal-open {
@@ -89,6 +90,7 @@
 .modal-overlay-open {
   opacity: 1;
   visibility: visible;
+  z-index: 1001;
 }
 
 .calendar-layout {
@@ -330,7 +332,7 @@ button.agendarbotao:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 999;
+  z-index: 1001;
   transition: opacity 0.3s ease-in-out;
   opacity: 0;
   visibility: hidden;
@@ -375,7 +377,7 @@ button.agendarbotao:hover {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1001;
 }
 
 /* Sales Modal Styling */

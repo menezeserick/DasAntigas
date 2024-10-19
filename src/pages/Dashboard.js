@@ -18,7 +18,7 @@ const Dashboard = () => {
     const [paymentMethods] = useState([]);
     const [professionalBalances, setProfessionalBalances] = useState([]);
     const [selectedTimes, setSelectedTimes] = useState([]);
-    const [boxValue, setBoxValue] = useState(0); // Estado para valor do caixa
+    const [boxValue, setBoxValue] = useState(0); 
     const [adjustmentValue, setAdjustmentValue] = useState('');
     const [modalProductOpen, setModalProductOpen] = useState(false);
     const [productName, setProductName] = useState('');
@@ -28,13 +28,21 @@ const Dashboard = () => {
     const [salesData, setSalesData] = useState([]);
     const [productQuantity, setProductQuantity] = useState('');
     const [stockData, setStockData] = useState([]);
-    const [isModalStockDetailsOpen, setModalStockDetailsOpen] = useState(false);  // Default to closed
+    const [serviceData, setServiceData] = useState([]);
+    const [isModalStockDetailsOpen, setModalStockDetailsOpen] = useState(false);
+    const [isModalServiceDetailsOpen, setModalServiceDetailsOpen] = useState(false); 
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
         professional: '',
         date: '',
         time: ''
+    });
+
+    const [isEditServiceModalOpen, setEditServiceModalOpen] = useState(false);
+    const [editServiceData, setEditServiceData] = useState({
+        name: '',
+        price: '',
     });
 
     const [isEditProductModalOpen, setEditProductModalOpen] = useState(false);
@@ -70,9 +78,41 @@ const Dashboard = () => {
         setEditProductModalOpen(true);
     };
 
+    const handleEditService = (service) => {
+        closeServiceDetailsModal(); // Fechar o modal de detalhes de serviços
+
+        // Carregar os dados do serviço no formulário de edição
+        setEditServiceData({
+            id: service.id,  // Corrigido para incluir o ID do serviço
+            name: service.name,
+            price: service.price,
+        });
+        setEditServiceModalOpen(true); // Abrir o modal de edição de serviço
+    };
+
     const openRegisterBoxModal = async () => {
         setModalRegisterBoxOpen(true);
         await handleOpenBox();
+    };
+
+
+    const handleOpenServiceDetails = async () => {
+        try {
+            const q = query(collection(db, "services"));
+            const querySnapshot = await getDocs(q);
+
+            // Atribuir o id gerado pelo Firestore a cada documento de serviço
+            const services = querySnapshot.docs.map(doc => ({
+                id: doc.id,  // O id gerado pelo Firestore
+                ...doc.data() // Dados do documento, incluindo name e price
+            }));
+
+            console.log(services);
+            setServiceData(services);  // Atualiza o estado com os serviços e seus ids
+            setModalServiceDetailsOpen(true); // Abrir o modal de detalhes de serviços
+        } catch (error) {
+            console.error("Erro ao carregar os serviços: ", error);
+        }
     };
 
     const handleOpenStockDetails = async () => {
@@ -95,11 +135,15 @@ const Dashboard = () => {
         setModalStockDetailsOpen(false);
     };
 
+    const closeServiceDetailsModal = () => {
+        setModalServiceDetailsOpen(false);
+    };
+
     const handleUpdateProduct = async (e) => {
         e.preventDefault();
-    
+
         const { id, name, costPrice, salePrice, stock } = editProductData;
-    
+
         try {
             await updateDoc(doc(db, "products", id), {
                 name,
@@ -107,25 +151,56 @@ const Dashboard = () => {
                 salePrice: parseFloat(salePrice),
                 stock: parseInt(stock, 10)
             });
-    
+
             // Atualizar os dados na tabela
-            setStockData(stockData.map(product => 
+            setStockData(stockData.map(product =>
                 product.id === id ? { ...product, name, costPrice: parseFloat(costPrice), salePrice: parseFloat(salePrice), stock: parseInt(stock, 10) } : product
             ));
-    
+
             // Limpar campos e fechar modal de edição
             setEditProductModalOpen(false);
             setEditProductData({ id: '', name: '', costPrice: '', salePrice: '', stock: '' });
-    
+
             // Reabrir o modal de estoque
             handleOpenStockDetails(); // Chama a função que abre o modal de estoque
-    
+
             console.log("Produto atualizado com sucesso.");
         } catch (error) {
             console.error("Erro ao atualizar produto: ", error);
         }
     };
 
+    const handleUpdateService = async (e) => {
+        e.preventDefault();
+
+        const { id, name, price } = editServiceData;
+
+        try {
+            // Atualizar o documento de serviço no Firestore
+            await updateDoc(doc(db, "services", id), {
+                name,
+                price: parseFloat(price),
+            });
+
+            // Atualizar os dados na tabela local
+            setServiceData(serviceData.map(service =>
+                service.id === id ? { ...service, name, price: parseFloat(price) } : service
+            ));
+
+            // Fechar modal de edição
+            setEditServiceModalOpen(false);
+
+            // Limpar dados de edição
+            setEditServiceData({ id: '', name: '', price: '' });
+
+            // Reabrir o modal de serviços atualizado
+            handleOpenServiceDetails();
+
+            console.log("Serviço atualizado com sucesso.");
+        } catch (error) {
+            console.error("Erro ao atualizar serviço: ", error);
+        }
+    };
     const handleDeleteProduct = async (productId) => {
         const confirmDelete = window.confirm("Você tem certeza que deseja excluir este produto?");
         if (confirmDelete) {
@@ -139,8 +214,28 @@ const Dashboard = () => {
             }
         }
     };
+
+    const handleDeleteService = async (serviceDocId) => {
+        // Confirmar a exclusão com o usuário
+        const confirmDelete = window.confirm("Você tem certeza que deseja excluir este serviço?");
+        if (confirmDelete) {
+            try {
+                // Referência ao documento do serviço no Firestore, usando o Document ID
+                const serviceRef = doc(db, "services", serviceDocId); // O `serviceDocId` é o ID do documento Firestore
+                
+                // Deletar o documento do serviço
+                await deleteDoc(serviceRef);
     
+                // Atualizar a lista de serviços local
+                setServiceData(prevData => prevData.filter(service => service.id !== serviceDocId));
     
+                console.log("Serviço deletado com sucesso.");
+    
+            } catch (error) {
+                console.error("Erro ao deletar serviço: ", error);
+            }
+        }
+    };
 
     const handleOpenSalesDetails = async () => {
         try {
@@ -551,7 +646,82 @@ const Dashboard = () => {
                             <label>Preço do Serviço:</label>
                             <input type="number" step="0.01" name="servicePrice" required />
                             <button type="submit">Adicionar</button>
+                            <button id="detalhebotao" type="button" onClick={handleOpenServiceDetails}>Ver Serviços</button>
                             <button type="button" className="fecharbotao" onClick={closeServiceModal}>Fechar</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {isModalServiceDetailsOpen && (
+                <div className="modal-overlay-vendas" onClick={closeServiceDetailsModal}>
+                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                        <h2>Serviços</h2>
+                        {serviceData && serviceData.length > 0 ? (
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nome do Serviço</th>
+                                        <th>Preço</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {serviceData.map((services) => (
+                                        <tr key={services.id}>
+                                            <td>{services.name}</td>
+                                            <td>{Number.isFinite(services.price) ? `R$ ${services.price.toFixed(2)}` : 'N/A'}</td>
+                                            <td>
+                                                <FaEdit onClick={() => handleEditService(services)} style={{ cursor: 'pointer', marginRight: '10px' }} />
+                                                <FaTrash onClick={() => handleDeleteService(services.id)} style={{ cursor: 'pointer', color: 'red' }} />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <p>Nenhum dado de serviços disponível.</p>
+                        )}
+                        <button onClick={closeServiceDetailsModal}>Fechar</button>
+                    </div>
+                </div>
+            )}
+
+            {isEditServiceModalOpen && (
+                <div className="modal-overlay modal-overlay-open" onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                        setEditServiceModalOpen(false);
+                    }
+                }}>
+                    <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
+                        <h2>Editar Serviço</h2>
+                        <form onSubmit={handleUpdateService}>
+                            <label>Nome do Serviço:</label>
+                            <input
+                                type="text"
+                                value={editServiceData.name}
+                                onChange={(e) => setEditServiceData({ ...editServiceData, name: e.target.value })}
+                                required
+                            />
+                            <label>Preço:</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={editServiceData.price}
+                                onChange={(e) => setEditServiceData({ ...editServiceData, price: e.target.value })}
+                                required
+                            />
+                            <button type="submit">Salvar</button>
+                            <button
+                                type="button"
+                                className="fecharbotao"
+                                onClick={() => {
+                                    console.log("Fechar clicado!"); // Teste de clique
+                                    setEditServiceModalOpen(false); // Fecha o modal
+                                }}
+                            >
+                                Fechar
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -612,7 +782,7 @@ const Dashboard = () => {
                                         <th>Preço de Venda</th>
                                         <th>Preço de Custo</th>
                                         <th>Estoque Disponível</th>
-                                        <th>Ações</th> {/* Nova coluna para Ações */}
+                                        <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>

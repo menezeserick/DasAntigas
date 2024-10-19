@@ -216,32 +216,51 @@
 
 .service-controls {
     display: flex;
+    justify-content: space-around;
     align-items: center;
-    gap: 10px;
-}
-
-.service-controls button {
-    padding: 6px 12px;
-    border-radius: 4px;
+    gap: 10px; /* Espaçamento entre os botões */
+  }
+  
+  .service-controls button {
+    background-color: #3580dc;
+    color: white;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
     cursor: pointer;
-    transition: background-color 0.3s;
-}
+    transition: background-color 0.3s ease;
+  }
+  
+  .service-controls button.decrement-btn {
+    background-color: #ff5757; /* Vermelho para o botão de decremento */
+  }
+  
+  .service-controls button.increment-btn {
+    background-color: #66cc66; /* Verde para o botão de incremento */
+  }
+  
+  .service-controls button.fecharbotao {
+    background-color: #980101; /* Vermelho para o botão de remoção */
+  }
+  
+  .service-controls button.decrement-btn:hover {
+    background-color: #ff1c1c;
+  }
+  
 
-.decrement-btn, .increment-btn {
-    background-color: #5cb85c;
-}
-
-.decrement-btn:hover, .increment-btn:hover {
-    background-color: #4cae4c;
-}
-
-.remove-btn {
-    background-color: #d9534f;
-}
-
-.remove-btn:hover {
-    background-color: #c9302c;
-}
+@media (max-width: 480px) {
+    .service-controls {
+      flex-direction: column;
+      gap: 2px;
+    }
+  
+    .service-controls button {
+      width: 100%;
+      font-size: 14px;
+      padding: 10px;
+    }
+  }
 
 .total-price {
     font-size: 1.5rem;
