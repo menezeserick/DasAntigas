@@ -18,7 +18,7 @@ const Dashboard = () => {
     const [paymentMethods] = useState([]);
     const [professionalBalances, setProfessionalBalances] = useState([]);
     const [selectedTimes, setSelectedTimes] = useState([]);
-    const [boxValue, setBoxValue] = useState(0); 
+    const [boxValue, setBoxValue] = useState(0);
     const [adjustmentValue, setAdjustmentValue] = useState('');
     const [modalProductOpen, setModalProductOpen] = useState(false);
     const [productName, setProductName] = useState('');
@@ -30,7 +30,8 @@ const Dashboard = () => {
     const [stockData, setStockData] = useState([]);
     const [serviceData, setServiceData] = useState([]);
     const [isModalStockDetailsOpen, setModalStockDetailsOpen] = useState(false);
-    const [isModalServiceDetailsOpen, setModalServiceDetailsOpen] = useState(false); 
+    const [isModalServiceDetailsOpen, setModalServiceDetailsOpen] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -222,15 +223,15 @@ const Dashboard = () => {
             try {
                 // Referência ao documento do serviço no Firestore, usando o Document ID
                 const serviceRef = doc(db, "services", serviceDocId); // O `serviceDocId` é o ID do documento Firestore
-                
+
                 // Deletar o documento do serviço
                 await deleteDoc(serviceRef);
-    
+
                 // Atualizar a lista de serviços local
                 setServiceData(prevData => prevData.filter(service => service.id !== serviceDocId));
-    
+
                 console.log("Serviço deletado com sucesso.");
-    
+
             } catch (error) {
                 console.error("Erro ao deletar serviço: ", error);
             }
@@ -239,20 +240,37 @@ const Dashboard = () => {
 
     const handleOpenSalesDetails = async () => {
         try {
-            // Fechar o modal de caixa
             closeRegisterBoxModal();
-
-            // Consultar o banco de dados para obter as vendas
+    
             const q = query(collection(db, "vendas"));
             const querySnapshot = await getDocs(q);
-
+    
             const sales = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setSalesData(sales);
-            setModalSalesDetailsOpen(true); // Abrir o modal após carregar as vendas
+    
+            // Verifica se é uma nova semana
+            const now = new Date();
+            const lastUpdateDate = new Date(lastUpdated);
+    
+            // Calcula a diferença em semanas
+            const weeksDifference = Math.floor((now - lastUpdateDate) / (1000 * 60 * 60 * 24 * 7));
+    
+            if (weeksDifference >= 1) {
+                // Resetar os dados se for uma nova semana
+                setSalesData([]); // Limpa os dados da tabela
+                setLastUpdated(now); // Atualiza a data da última atualização
+            } else {
+                setSalesData(sales.sort((a, b) => new Date(b.start) - new Date(a.start))); // Ordena as vendas
+            }
+    
+            setModalSalesDetailsOpen(true);
         } catch (error) {
             console.error("Erro ao carregar vendas: ", error);
         }
     };
+
+    useEffect(() => {
+        setLastUpdated(new Date()); // Define a data atual na montagem
+    }, []);
 
     // Função para fechar o modal de vendas detalhadas
     const closeSalesDetailsModal = () => {
@@ -909,7 +927,7 @@ const Dashboard = () => {
                             </thead>
                             <tbody>
                                 {salesData
-                                    .sort((a, b) => new Date(b.start) - new Date(a.start))
+                                    .sort((a, b) => new Date(b.start) - new Date(a.start)) // Mantém as mais recentes em cima
                                     .map((sale) => (
                                         <tr key={sale.id}>
                                             <td>{sale.event.title || "Cliente Desconhecido"}</td>
@@ -937,6 +955,7 @@ const Dashboard = () => {
                                         </tr>
                                     ))}
                             </tbody>
+
                         </table>
                         <button onClick={closeSalesDetailsModal}>Fechar</button>
                     </div>
