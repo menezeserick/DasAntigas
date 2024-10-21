@@ -10,6 +10,10 @@
     margin-top: 105px;
 }
 
+body {
+    font-family: 'Lato', sans-serif;
+}
+
 .rbc-current-time-indicator {
     display: none;
 }
@@ -55,6 +59,7 @@
     font-size: 1.5rem;
     font-weight: bold;
     color: #000000;
+    text-transform: capitalize;
 }
 
 .daily-calendar .rbc-time-header-cell {
@@ -87,8 +92,10 @@
 
 .monthly-calendar .rbc-toolbar-label {
     font-size: 1.5rem;
+    margin-top: 10px;
     font-weight: bold;
     color: #000000;
+    text-transform: capitalize;
 }
 
 .monthly-calendars .rbc-time-header-cell {
