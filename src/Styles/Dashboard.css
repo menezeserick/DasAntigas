@@ -64,8 +64,8 @@ body {
 
 .modal button {
   margin-top: 10px;
-  background-color: #00b300; /* Green button for adjustment */
-  color: #fff;
+  background-color: #6B8E23; /* Verde musgo suave */
+  color: #FFFFFF; /* Texto branco */
   padding: 10px;
   border: none;
   border-radius: 5px;
@@ -74,7 +74,7 @@ body {
 }
 
 .modal button:hover {
-  background-color: #008000; /* Darker green on hover */
+  background-color: #556B2F; /* Darker green on hover */
 }
 
 /* Overlay Styles */
@@ -172,8 +172,8 @@ ul.selected-times li button:hover {
 }
 
 button.fecharbotao {
-  background-color: #980101; /* Red for closing */
-  color: #fff;
+  background-color: #B33A3A; /* Vermelho bordô */
+  color: #FFFFFF;
   padding: 10px 15px;
   font-size: 16px;
   border: none;
@@ -187,8 +187,8 @@ button.fecharbotao:hover {
 }
 
 button.agendarbotao{
-  background-color: #3580dc; /* Red for closing */
-  color: #fff;
+  background-color: #1E3A8A; /* Azul claro */
+  color: #FFFFFF; /* Texto branco */
   padding: 10px 15px;
   font-size: 16px;
   border: none;
@@ -198,7 +198,7 @@ button.agendarbotao{
 }
 
 button.agendarbotao:hover {
-  background-color: #3270bd;
+  background-color: #162A63;
 }
 
 
@@ -262,8 +262,8 @@ button.agendarbotao:hover {
 }
 
 .modal-caixa .box-adjust button {
-  background-color: #00b300; /* Green button for adjustment */
-  color: #fff;
+  background-color: #6B8E23; /* Verde musgo suave */
+  color: #FFFFFF; /* Texto branco */
   border: none;
   padding: 10px;
   font-size: 16px;
@@ -273,7 +273,7 @@ button.agendarbotao:hover {
 }
 
 .modal-caixa .box-adjust button:hover {
-  background-color: #008000; /* Darker green on hover */
+  background-color: #556B2F;/* Darker green on hover */
 }
 
 /* List of Professional Balances */
@@ -296,25 +296,36 @@ button.agendarbotao:hover {
 }
 
 .modal-caixa #detalhebotao {
-  background-color: #3580dc; /* Cor azul desejada */
-  color: #fff;
+  background-color: #1E3A8A; /* Azul claro */
+  margin-right: 10px;
+  color: #FFFFFF; /* Texto branco */
 }
 
 .modal-caixa #detalhebotao:hover {
-  background-color: #3270bd; /* Cor azul escura ao passar o mouse */
+  background-color: #162A63; /* Cor azul escura ao passar o mouse */
+}
+
+.modal-caixa #versaldos {
+  background-color: #1E3A8A; /* Azul marinho */
+  color: #FFFFFF; /* Texto escuro */
+  margin-right: 10px;
+}
+
+.modal-caixa #versaldos:hover {
+  background-color: #162A63; /* Cor azul escura ao passar o mouse */
 }
 
 .modal-open #detalhebotao {
-  background-color: #3580dc; /* Cor azul desejada */
+  background-color: #1E3A8A; /* Cor azul desejada */
   color: #fff;
 }
 
 .modal-open #detalhebotao:hover {
-  background-color: #3270bd; /* Cor azul escura ao passar o mouse */
+  background-color: #162A63; /* Cor azul escura ao passar o mouse */
 }
 /* Close Button for Caixa Modal */
 .modal-caixa button {
-  background-color: #dc3545; /* Red for closing */
+  background-color: #B33A3A; /* Vermelho bordô */
   color: #fff;
   padding: 10px 15px;
   font-size: 16px;
@@ -325,7 +336,7 @@ button.agendarbotao:hover {
 }
 
 .modal-caixa button:hover {
-  background-color: #c82333;
+  background-color: #7b0303;
 }
 
 /* Overlay for Caixa Modal */
@@ -443,7 +454,7 @@ button.agendarbotao:hover {
 
 /* Close Button Styling */
 .modal-vendas button {
-  background-color: #dc3545;
+  background-color: #B33A3A;
   color: white;
   padding: 10px 15px;
   border: none;
@@ -458,7 +469,7 @@ button.agendarbotao:hover {
 }
 
 .modal-vendas button:hover {
-  background-color: #c82333;
+  background-color: #7b0303;
 }
 
 /* Mobile Responsiveness */

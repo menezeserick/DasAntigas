@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Calendario from '../components/Calendario';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
 import Header from '../components/Header';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { subDays, subMonths, isWithinInterval } from 'date-fns';
 
 const Dashboard = () => {
     const [events, setEvents] = useState([]);
@@ -32,6 +33,13 @@ const Dashboard = () => {
     const [isModalStockDetailsOpen, setModalStockDetailsOpen] = useState(false);
     const [isModalServiceDetailsOpen, setModalServiceDetailsOpen] = useState(false);
     const [lastUpdated, setLastUpdated] = useState(new Date());
+    const [modalProfessionalBalancesOpen, setModalProfessionalBalancesOpen] = useState(false);
+    const [weeklyBalances, setWeeklyBalances] = useState([]);
+    const [modalMonthlyBalancesOpen, setModalMonthlyBalancesOpen] = useState(false);
+    const [monthlyBalances, setMonthlyBalances] = useState([]);
+    const [openBoxes, setOpenBoxes] = useState([]);
+    const [modalOpenBoxesOpen, setModalOpenBoxesOpen] = useState(false);
+    const [filter, setFilter] = useState('all');
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -64,6 +72,149 @@ const Dashboard = () => {
     const openProductModal = () => setModalProductOpen(true);
     const closeProductModal = () => setModalProductOpen(false);
     const closeRegisterBoxModal = () => setModalRegisterBoxOpen(false);
+
+
+    const closeProfessionalBalancesModal = () => setModalProfessionalBalancesOpen(false);
+    const closeMonthlyBalancesModal = () => setModalMonthlyBalancesOpen(false);
+    const closeOpenBoxesModal = () => setModalOpenBoxesOpen(false);
+
+
+    // Função para abrir o modal e buscar os dados dos caixas
+    const openOpenBoxesModal = async () => {
+        try {
+            const boxesSnapshot = await getDocs(collection(db, "boxes"));
+            const boxesData = [];
+
+            boxesSnapshot.forEach((doc) => {
+                const data = doc.data();
+                const professionals = data.professionals || [];
+
+                // Calcula o total do caixa do dia
+                let totalAmount = 0;
+
+                professionals.forEach((prof) => {
+                    totalAmount += parseFloat(prof.balance) || 0;
+                });
+
+                // Adiciona os profissionais com o valor do caixa total do dia
+                professionals.forEach((prof) => {
+                    boxesData.push({
+                        date: data.date,
+                        name: prof.name,
+                        balance: parseFloat(prof.balance) || 0,
+                        totalAmount: totalAmount,  // Total do caixa do dia
+                        timestamp: new Date(data.date),  // Converte a data para timestamp para facilitar a filtragem
+                    });
+                });
+            });
+
+            setOpenBoxes(boxesData);
+            setModalOpenBoxesOpen(true);
+        } catch (error) {
+            console.error("Erro ao buscar os caixas abertos: ", error);
+        }
+    };
+
+    // Função para aplicar o filtro de acordo com o estado
+    const applyFilter = () => {
+        const now = new Date();
+
+        switch (filter) {
+            case 'week':
+                return openBoxes.filter(box =>
+                    isWithinInterval(box.timestamp, { start: subDays(now, 7), end: now })
+                );
+            case 'month':
+                return openBoxes.filter(box =>
+                    isWithinInterval(box.timestamp, { start: subMonths(now, 1), end: now })
+                );
+            case 'all':
+            default:
+                return openBoxes;
+        }
+    };
+
+    const filteredBoxes = applyFilter();
+    
+
+    const openMonthlyBalancesModal = async () => {
+        const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+        const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
+
+        try {
+            const boxesQuery = query(
+                collection(db, "boxes"),
+                where("date", ">=", startOfMonth),
+                where("date", "<=", endOfMonth)
+            );
+            const querySnapshot = await getDocs(boxesQuery);
+
+            const balanceMap = {};
+
+            querySnapshot.forEach((doc) => {
+                const professionals = doc.data().professionals || [];
+
+                professionals.forEach((prof) => {
+                    if (!balanceMap[prof.id]) {
+                        balanceMap[prof.id] = {
+                            name: prof.name,
+                            balance: parseFloat(prof.balance) || 0
+                        };
+                    } else {
+                        balanceMap[prof.id].balance += parseFloat(prof.balance) || 0;
+                    }
+                });
+            });
+
+            const balances = Object.values(balanceMap);
+
+            setMonthlyBalances(balances);
+            setModalMonthlyBalancesOpen(true);
+        } catch (error) {
+            console.error("Erro ao buscar os saldos dos profissionais do mês: ", error);
+        }
+    };
+
+    const openProfessionalBalancesModal = async () => {
+        const startOfWeek = moment().startOf('week').format('YYYY-MM-DD');
+        const endOfWeek = moment().endOf('week').format('YYYY-MM-DD');
+
+        try {
+            // Busca os documentos da coleção "boxes" dentro do intervalo da semana atual
+            const boxesQuery = query(
+                collection(db, "boxes"),
+                where("date", ">=", startOfWeek),
+                where("date", "<=", endOfWeek)
+            );
+            const querySnapshot = await getDocs(boxesQuery);
+
+            const balanceMap = {};
+
+            // Percorre cada documento retornado
+            querySnapshot.forEach((doc) => {
+                const professionals = doc.data().professionals || [];
+
+                professionals.forEach((prof) => {
+                    if (!balanceMap[prof.id]) {
+                        balanceMap[prof.id] = {
+                            name: prof.name,
+                            balance: parseFloat(prof.balance) || 0
+                        };
+                    } else {
+                        balanceMap[prof.id].balance += parseFloat(prof.balance) || 0;
+                    }
+                });
+            });
+
+            // Transforma o objeto em um array para exibir no modal
+            const balances = Object.values(balanceMap);
+
+            setWeeklyBalances(balances);
+            setModalProfessionalBalancesOpen(true);
+        } catch (error) {
+            console.error("Erro ao buscar os saldos dos profissionais da semana: ", error);
+        }
+    };
 
 
     const handleEditProduct = (product) => {
@@ -241,19 +392,19 @@ const Dashboard = () => {
     const handleOpenSalesDetails = async () => {
         try {
             closeRegisterBoxModal();
-    
+
             const q = query(collection(db, "vendas"));
             const querySnapshot = await getDocs(q);
-    
+
             const sales = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+
             // Verifica se é uma nova semana
             const now = new Date();
             const lastUpdateDate = new Date(lastUpdated);
-    
+
             // Calcula a diferença em semanas
             const weeksDifference = Math.floor((now - lastUpdateDate) / (1000 * 60 * 60 * 24 * 7));
-    
+
             if (weeksDifference >= 1) {
                 // Resetar os dados se for uma nova semana
                 setSalesData([]); // Limpa os dados da tabela
@@ -261,7 +412,7 @@ const Dashboard = () => {
             } else {
                 setSalesData(sales.sort((a, b) => new Date(b.start) - new Date(a.start))); // Ordena as vendas
             }
-    
+
             setModalSalesDetailsOpen(true);
         } catch (error) {
             console.error("Erro ao carregar vendas: ", error);
@@ -886,7 +1037,7 @@ const Dashboard = () => {
                             <button onClick={handleAdjustMoney}>Ajustar Caixa</button>
                         </div>
 
-                        <h3>Saldos dos Profissionais:</h3>
+                        <h3>Saldos do Dia:</h3>
                         <ul>
                             {professionalBalances.map((professional) => {
                                 const teste = professional.name === 'teste';
@@ -903,9 +1054,100 @@ const Dashboard = () => {
                             })}
                         </ul>
 
-                        <button id="detalhebotao" onClick={handleOpenSalesDetails}>Ver Vendas Detalhadas</button>
+                        <button id='versaldos' onClick={openProfessionalBalancesModal}>Saldos da Semana</button>
+                        <button id='versaldos' onClick={openMonthlyBalancesModal}>Saldos do Mês</button>   
+                        <br></br>
+                        <button id="detalhebotao" onClick={handleOpenSalesDetails}>Vendas Detalhadas</button>
+                        <button id="detalhebotao" onClick={openOpenBoxesModal}>Caixas Abertos</button>
                         <br></br>
                         <button onClick={closeRegisterBoxModal}>Fechar</button>
+                    </div>
+                </div>
+            )}
+
+            {modalOpenBoxesOpen && (
+                <div className="modal-overlay-vendas" onClick={closeOpenBoxesModal}>
+                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <h2 style={{ margin: '0', paddingRight: '20px' }}>Caixas Abertos</h2>
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                                <button onClick={() => setFilter('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF'}}>Caixas da Semana</button>
+                                <button onClick={() => setFilter('month')}style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF'}}>Caixas do Mês</button>
+                                <button onClick={() => setFilter('all')}style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF'}}>Todos os Caixas</button>
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Nome do Profissional</th>
+                                    <th>Saldo</th>
+                                    <th>Total do Caixa no Dia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredBoxes.map((box, index) => (
+                                    <tr key={index}>
+                                        <td>{box.date}</td>
+                                        <td>{box.name}</td>
+                                        <td>R$ {box.balance.toFixed(2)}</td>
+                                        <td>R$ {box.totalAmount.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button onClick={closeOpenBoxesModal}>Fechar</button>
+                    </div>
+                </div>
+            )}
+
+            {modalMonthlyBalancesOpen && (
+                <div className="modal-overlay-vendas" onClick={closeMonthlyBalancesModal}>
+                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                        <h2>Saldos Mensal</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {monthlyBalances.map(prof => (
+                                    <tr key={prof.id}>
+                                        <td>{prof.name}</td>
+                                        <td>R$ {prof.balance.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button onClick={closeMonthlyBalancesModal}>Fechar</button>
+                    </div>
+                </div>
+            )}
+
+            {modalProfessionalBalancesOpen && (
+                <div className="modal-overlay-vendas" onClick={closeProfessionalBalancesModal}>
+                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                        <h2>Saldo Semanal</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {weeklyBalances.map(prof => (
+                                    <tr key={prof.id}>
+                                        <td>{prof.name}</td>
+                                        <td>R$ {prof.balance.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button onClick={closeProfessionalBalancesModal}>Fechar</button>
                     </div>
                 </div>
             )}
@@ -927,7 +1169,6 @@ const Dashboard = () => {
                             </thead>
                             <tbody>
                                 {salesData
-                                    .sort((a, b) => new Date(b.start) - new Date(a.start)) // Mantém as mais recentes em cima
                                     .map((sale) => (
                                         <tr key={sale.id}>
                                             <td>{sale.event.title || "Cliente Desconhecido"}</td>
