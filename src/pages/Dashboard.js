@@ -1166,7 +1166,7 @@ const Dashboard = () => {
                                 <thead>
                                     <tr>
                                         <th>Nome</th>
-                                        <th>Saldo</th>
+                                        <th>Saldo com Comissão</th>
                                     </tr>
                                 </thead>
                                 <tbody>
