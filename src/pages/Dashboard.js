@@ -40,6 +40,8 @@ const Dashboard = () => {
     const [openBoxes, setOpenBoxes] = useState([]);
     const [modalOpenBoxesOpen, setModalOpenBoxesOpen] = useState(false);
     const [filter, setFilter] = useState('all');
+    const [balances, setBalances] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -77,6 +79,50 @@ const Dashboard = () => {
     const closeProfessionalBalancesModal = () => setModalProfessionalBalancesOpen(false);
     const closeMonthlyBalancesModal = () => setModalMonthlyBalancesOpen(false);
     const closeOpenBoxesModal = () => setModalOpenBoxesOpen(false);
+
+
+    const fetchBalances = async (start, end) => {
+        try {
+            setLoading(true);
+            const boxesQuery = query(
+                collection(db, "boxes"),
+                where("date", ">=", start),
+                where("date", "<=", end)
+            );
+            const querySnapshot = await getDocs(boxesQuery);
+
+            const balanceMap = {};
+
+            querySnapshot.forEach((doc) => {
+                const professionals = doc.data().professionals || [];
+
+                professionals.forEach((prof) => {
+                    if (!balanceMap[prof.id]) {
+                        balanceMap[prof.id] = {
+                            name: prof.name,
+                            balance: parseFloat(prof.balance) || 0
+                        };
+                    } else {
+                        balanceMap[prof.id].balance += parseFloat(prof.balance) || 0;
+                    }
+                });
+            });
+
+            const fetchedBalances = Object.values(balanceMap);
+            setBalances(fetchedBalances);
+        } catch (error) {
+            console.error("Erro ao buscar os saldos dos profissionais: ", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+        const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
+
+        fetchBalances(startOfMonth, endOfMonth);
+    }, []);
 
 
     // Função para abrir o modal e buscar os dados dos caixas
@@ -135,44 +181,23 @@ const Dashboard = () => {
     };
 
     const filteredBoxes = applyFilter();
-    
 
-    const openMonthlyBalancesModal = async () => {
-        const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-        const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
+    const handleFilterChange = (filterType) => {
+        let start, end;
 
-        try {
-            const boxesQuery = query(
-                collection(db, "boxes"),
-                where("date", ">=", startOfMonth),
-                where("date", "<=", endOfMonth)
-            );
-            const querySnapshot = await getDocs(boxesQuery);
-
-            const balanceMap = {};
-
-            querySnapshot.forEach((doc) => {
-                const professionals = doc.data().professionals || [];
-
-                professionals.forEach((prof) => {
-                    if (!balanceMap[prof.id]) {
-                        balanceMap[prof.id] = {
-                            name: prof.name,
-                            balance: parseFloat(prof.balance) || 0
-                        };
-                    } else {
-                        balanceMap[prof.id].balance += parseFloat(prof.balance) || 0;
-                    }
-                });
-            });
-
-            const balances = Object.values(balanceMap);
-
-            setMonthlyBalances(balances);
-            setModalMonthlyBalancesOpen(true);
-        } catch (error) {
-            console.error("Erro ao buscar os saldos dos profissionais do mês: ", error);
+        if (filterType === 'week') {
+            start = moment().startOf('week').format('YYYY-MM-DD');
+            end = moment().endOf('week').format('YYYY-MM-DD');
+        } else if (filterType === 'month') {
+            start = moment().startOf('month').format('YYYY-MM-DD');
+            end = moment().endOf('month').format('YYYY-MM-DD');
+        } else {
+            // Caso o filtro seja para "Todos os Caixas", podemos buscar desde uma data antiga
+            start = '2020-01-01'; // Ou qualquer data de início desejada
+            end = moment().format('YYYY-MM-DD');
         }
+
+        fetchBalances(start, end);
     };
 
     const openProfessionalBalancesModal = async () => {
@@ -1054,9 +1079,7 @@ const Dashboard = () => {
                             })}
                         </ul>
 
-                        <button id='versaldos' onClick={openProfessionalBalancesModal}>Saldos da Semana</button>
-                        <button id='versaldos' onClick={openMonthlyBalancesModal}>Saldos do Mês</button>   
-                        <br></br>
+                        <button id='versaldos' onClick={openProfessionalBalancesModal}>Saldos</button>
                         <button id="detalhebotao" onClick={handleOpenSalesDetails}>Vendas Detalhadas</button>
                         <button id="detalhebotao" onClick={openOpenBoxesModal}>Caixas Abertos</button>
                         <br></br>
@@ -1071,9 +1094,9 @@ const Dashboard = () => {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <h2 style={{ margin: '0', paddingRight: '20px' }}>Caixas Abertos</h2>
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                                <button onClick={() => setFilter('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF'}}>Caixas da Semana</button>
-                                <button onClick={() => setFilter('month')}style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF'}}>Caixas do Mês</button>
-                                <button onClick={() => setFilter('all')}style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF'}}>Todos os Caixas</button>
+                                <button onClick={() => setFilter('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Caixas da Semana</button>
+                                <button onClick={() => setFilter('month')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Caixas do Mês</button>
+                                <button onClick={() => setFilter('all')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Todos os Caixas</button>
                             </div>
                         </div>
 
@@ -1126,31 +1149,47 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
-
             {modalProfessionalBalancesOpen && (
                 <div className="modal-overlay-vendas" onClick={closeProfessionalBalancesModal}>
                     <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <h2>Saldo Semanal</h2>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Saldo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {weeklyBalances.map(prof => (
-                                    <tr key={prof.id}>
-                                        <td>{prof.name}</td>
-                                        <td>R$ {prof.balance.toFixed(2)}</td>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <h2 style={{ margin: '0', paddingBottom: '20px' }}>Saldos</h2>
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                                <button onClick={() => handleFilterChange('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Saldos da Semana</button>
+                                <button onClick={() => handleFilterChange('month')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Saldos do Mês</button>
+                            </div>
+                        </div>
+                        {loading ? (
+                            <p>Carregando saldos...</p>
+                        ) : (
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Saldo</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <button onClick={closeProfessionalBalancesModal}>Fechar</button>
+                                </thead>
+                                <tbody>
+                                    {balances.length > 0 ? (
+                                        balances.map((prof) => (
+                                            <tr key={prof.id}>
+                                                <td>{prof.name}</td>
+                                                <td>R$ {prof.balance.toFixed(2)}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="2">Nenhum saldo encontrado.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+                        <button onClick={closeProfessionalBalancesModal}> Fechar </button>
                     </div>
                 </div>
             )}
+
 
             {modalSalesDetailsOpen && (
                 <div className="modal-overlay-vendas" onClick={closeSalesDetailsModal}>
