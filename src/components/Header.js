@@ -8,30 +8,29 @@ const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, op
         setMenuOpen(!menuOpen);
     };
 
-    // Funções que fecham o menu e abrem os respectivos modais
     const handleOpenScheduleModal = () => {
-        setMenuOpen(false);  // Fecha o menu
-        openScheduleModal(); // Abre o modal de agendar cliente
+        setMenuOpen(false);  
+        openScheduleModal(); 
     };
 
     const handleOpenProfessionalModal = () => {
-        setMenuOpen(false);  // Fecha o menu
-        openProfessionalModal(); // Abre o modal de adicionar profissional
+        setMenuOpen(false);
+        openProfessionalModal(); 
     };
 
     const handleOpenServiceModal = () => {
-        setMenuOpen(false);  // Fecha o menu
-        openServiceModal(); // Abre o modal de adicionar serviço
+        setMenuOpen(false); 
+        openServiceModal(); 
     };
 
     const handleOpenRegisterBoxModal = () => {
-        setMenuOpen(false);  // Fecha o menu
-        openRegisterBoxModal(); // Abre o modal do caixa
+        setMenuOpen(false); 
+        openRegisterBoxModal(); 
     };
 
     const handleOpenProductModal = () => {
-        setMenuOpen(false);  // Fecha o menu
-        openProductModal(); // Abre o modal de adicionar produto
+        setMenuOpen(false); 
+        openProductModal(); 
     }
 
     return (
@@ -45,8 +44,6 @@ const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, op
                 <span className="bar"></span>
                 <span className="bar"></span>
             </div>
-
-            {/* Modal menu abaixo do ícone de hambúrguer */}
             {menuOpen && <div className="overlay" onClick={toggleMenu}></div>}
 
             <div className={`header-actions ${menuOpen ? 'active' : ''}`}>

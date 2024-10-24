@@ -225,7 +225,7 @@ body {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    gap: 10px; /* Espaçamento entre os botões */
+    gap: 10px; 
   }
   
   .service-controls button {
@@ -240,15 +240,15 @@ body {
   }
   
   .service-controls button.decrement-btn {
-    background-color: #ff5757; /* Vermelho para o botão de decremento */
+    background-color: #ff5757; 
   }
   
   .service-controls button.increment-btn {
-    background-color: #66cc66; /* Verde para o botão de incremento */
+    background-color: #66cc66;
   }
   
   .service-controls button.fecharbotao {
-    background-color: #980101; /* Vermelho para o botão de remoção */
+    background-color: #980101;
   }
   
   .service-controls button.decrement-btn:hover {

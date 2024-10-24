@@ -156,21 +156,17 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         }
 
         try {
-            // Verifica se há serviços ou produtos selecionados
             if (selectedServices.length === 0 && selectedProducts.length === 0) {
                 setErrorMessage('Pelo menos um serviço ou produto deve ser selecionado para completar a venda.');
                 return;
             }
 
-            // Verifica se os produtos possuem estoque suficiente
             for (const product of selectedProducts) {
                 if (product.quantity > product.stock || product.stock === 0) {
                     setErrorMessage(`O produto "${product.name}" não possui estoque suficiente. Estoque disponível: ${product.stock}`);
                     return;
                 }
             }
-
-            // Processamento dos serviços (se houver)
             const processedServices = selectedServices.map(service => {
                 const professional = professionals.find(prof => prof.id === service.selectedProfessional);
                 const professionalName = professional?.title;
@@ -180,42 +176,40 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 const originalSaleValue = valorLiquido;
 
                 if (professionalName !== 'teste') {
-                    comissao = 0.45 * valorLiquido; // Aplicar comissão de 45%
-                    valorLiquido -= comissao; // Valor líquido após comissão
+                    comissao = 0.45 * valorLiquido; 
+                    valorLiquido -= comissao; 
                 }
 
                 return {
                     ...service,
                     comissao,
                     valorLiquido,
-                    originalSaleValue, // Valor sem a comissão
+                    originalSaleValue,
                     professionalId: service.selectedProfessional,
-                    professionalName: professionalName // Adiciona o nome do profissional
+                    professionalName: professionalName 
                 };
             });
 
-            // Processamento dos produtos (se houver)
             const processedProducts = [];
             for (const product of selectedProducts) {
                 const professionalName = professionals.find(prof => prof.id === product.selectedProfessional)?.title;
 
                 let comissao = 0;
                 let valorLiquido = product.salePrice * product.quantity;
-                const originalSaleValue = valorLiquido; // Valor sem comissão
+                const originalSaleValue = valorLiquido; 
 
                 if (professionalName !== 'teste') {
-                    comissao = 0.15 * valorLiquido; // Aplicar comissão de 15%
-                    valorLiquido -= comissao; // Valor líquido após comissão
+                    comissao = 0.15 * valorLiquido; 
+                    valorLiquido -= comissao; 
                 }
 
                 const newStock = product.stock - product.quantity;
 
-                // Atualiza o estoque do produto corretamente
-                if (newStock >= 0) { // Verifica se há estoque suficiente antes de atualizar
+                if (newStock >= 0) { 
                     await updateDoc(doc(db, "products", product.id), { stock: newStock });
                 } else {
                     setErrorMessage(`O produto "${product.name}" não possui estoque suficiente. Estoque disponível: ${product.stock}`);
-                    return; // Sai da função se o estoque não for suficiente
+                    return; 
                 }
 
                 processedProducts.push({
@@ -223,20 +217,17 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     valorTotal: product.salePrice * product.quantity,
                     comissao,
                     valorLiquido,
-                    originalSaleValue, // Valor sem a comissão
+                    originalSaleValue, 
                     professionalId: product.selectedProfessional,
                     professionalName: professionalName
                 });
             }
-
-            // Cálculo do valor total e líquido da venda
             const totalPrice = processedServices.reduce((total, service) => total + (service.price * service.quantity), 0)
                 + processedProducts.reduce((total, product) => total + (product.salePrice * product.quantity), 0);
 
             const netTotal = processedServices.reduce((total, service) => total + service.valorLiquido, 0)
                 + processedProducts.reduce((total, product) => total + product.valorLiquido, 0);
 
-            // Registrar venda no banco de dados
             const vendaDoc = await addDoc(collection(db, "vendas"), {
                 event: selectedEvent,
                 services: processedServices,
@@ -248,7 +239,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
 
-            // Atualizar saldo dos profissionais no caixa
             const today = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric',
@@ -268,23 +258,20 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             const boxData = boxDoc.data();
             const professionalsData = boxData.professionals || [];
 
-            // Agrupar serviços e produtos por profissional
             const professionalBalances = {};
 
-            // Somar os valores dos serviços para cada profissional
             processedServices.forEach(service => {
                 const professionalId = service.professionalId;
                 if (!professionalBalances[professionalId]) {
                     professionalBalances[professionalId] = {
                         total: 0,
-                        originalSaleValue: 0, // Inicializa o valor original
+                        originalSaleValue: 0, 
                     };
                 }
-                professionalBalances[professionalId].total += service.valorLiquido; // Valor com comissão
-                professionalBalances[professionalId].originalSaleValue += service.originalSaleValue; // Valor sem comissão
+                professionalBalances[professionalId].total += service.valorLiquido; 
+                professionalBalances[professionalId].originalSaleValue += service.originalSaleValue; 
             });
 
-            // Somar os valores dos produtos para cada profissional
             processedProducts.forEach(product => {
                 const professionalId = product.professionalId;
                 if (!professionalBalances[professionalId]) {
@@ -293,18 +280,16 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                         originalSaleValue: 0,
                     };
                 }
-                professionalBalances[professionalId].total += product.valorLiquido; // Valor com comissão
-                professionalBalances[professionalId].originalSaleValue += product.valorTotal; // Valor sem comissão
+                professionalBalances[professionalId].total += product.valorLiquido; 
+                professionalBalances[professionalId].originalSaleValue += product.valorTotal; 
             });
 
-            // Atualizar o saldo de cada profissional
             for (const professionalId of Object.keys(professionalBalances)) {
                 const professionalIndex = professionalsData.findIndex(p => p.id === professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
                     const newBalance = parseFloat(professional.balance) + professionalBalances[professionalId].total;
 
-                    // Somar os valores sem comissão ao invés de sobrescrever
                     professionalsData[professionalIndex].balance = newBalance;
                     professionalsData[professionalIndex].originalSaleValue = (professional.originalSaleValue || 0) + professionalBalances[professionalId].originalSaleValue;
 
@@ -553,12 +538,9 @@ const Calendario = ({ events, professionals = [] }) => {
         setSelectedEvent(event);
         setIsCompleting(true);
     };
-
-    // Função para lidar com a seleção de uma célula no calendário
     const handleSelectSlot = (slotInfo) => {
-        // Atualiza a data selecionada com o início do slot (célula)
         setSelectedDate(slotInfo.start);
-        setSelectedEvent(null);  // Limpa o evento selecionado ao clicar em uma célula vazia
+        setSelectedEvent(null); 
     };
 
     const handleComplete = (completionData) => {
@@ -601,8 +583,8 @@ const Calendario = ({ events, professionals = [] }) => {
                     resourceTitleAccessor="title"
                     className="calendar"
                     onNavigate={handleNavigate}
-                    selectable={true}  // Torna as células selecionáveis
-                    onSelectSlot={handleSelectSlot}  // Adiciona a função para selecionar a célula
+                    selectable={true}  
+                    onSelectSlot={handleSelectSlot}  
                     components={{
                         event: () => null
                     }}
@@ -677,8 +659,8 @@ const Calendario = ({ events, professionals = [] }) => {
                         resourceTitleAccessor="title"
                         className="calendar"
                         onNavigate={handleNavigate}
-                        selectable={true}  // Torna as células selecionáveis
-                        onSelectSlot={handleSelectSlot}  // Adiciona a função para selecionar a célula
+                        selectable={true}  
+                        onSelectSlot={handleSelectSlot}  
                         components={{
                             event: () => null
                         }}

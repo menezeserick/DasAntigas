@@ -126,7 +126,6 @@ const Dashboard = () => {
     }, []);
 
 
-    // Função para abrir o modal e buscar os dados dos caixas
     const openOpenBoxesModal = async () => {
         try {
             const boxesSnapshot = await getDocs(collection(db, "boxes"));
@@ -136,21 +135,19 @@ const Dashboard = () => {
                 const data = doc.data();
                 const professionals = data.professionals || [];
 
-                // Calcula o total do caixa do dia
                 let totalAmount = 0;
 
                 professionals.forEach((prof) => {
                     totalAmount += parseFloat(prof.balance) || 0;
                 });
 
-                // Adiciona os profissionais com o valor do caixa total do dia
                 professionals.forEach((prof) => {
                     boxesData.push({
                         date: data.date,
                         name: prof.name,
                         balance: parseFloat(prof.balance) || 0,
-                        totalAmount: totalAmount,  // Total do caixa do dia
-                        timestamp: new Date(data.date),  // Converte a data para timestamp para facilitar a filtragem
+                        totalAmount: totalAmount,  
+                        timestamp: new Date(data.date),  
                     });
                 });
             });
@@ -162,7 +159,6 @@ const Dashboard = () => {
         }
     };
 
-    // Função para aplicar o filtro de acordo com o estado
     const applyFilter = () => {
         const now = new Date();
 
@@ -193,8 +189,7 @@ const Dashboard = () => {
             start = moment().startOf('month').format('YYYY-MM-DD');
             end = moment().endOf('month').format('YYYY-MM-DD');
         } else {
-            // Caso o filtro seja para "Todos os Caixas", podemos buscar desde uma data antiga
-            start = '2020-01-01'; // Ou qualquer data de início desejada
+            start = '2020-01-01'; 
             end = moment().format('YYYY-MM-DD');
         }
 
@@ -206,7 +201,6 @@ const Dashboard = () => {
         const endOfWeek = moment().endOf('week').format('YYYY-MM-DD');
 
         try {
-            // Busca os documentos da coleção "boxes" dentro do intervalo da semana atual
             const boxesQuery = query(
                 collection(db, "boxes"),
                 where("date", ">=", startOfWeek),
@@ -216,7 +210,6 @@ const Dashboard = () => {
 
             const balanceMap = {};
 
-            // Percorre cada documento retornado
             querySnapshot.forEach((doc) => {
                 const professionals = doc.data().professionals || [];
 
@@ -232,7 +225,6 @@ const Dashboard = () => {
                 });
             });
 
-            // Transforma o objeto em um array para exibir no modal
             const balances = Object.values(balanceMap);
 
             setWeeklyBalances(balances);
@@ -257,15 +249,13 @@ const Dashboard = () => {
     };
 
     const handleEditService = (service) => {
-        closeServiceDetailsModal(); // Fechar o modal de detalhes de serviços
-
-        // Carregar os dados do serviço no formulário de edição
+        closeServiceDetailsModal(); 
         setEditServiceData({
-            id: service.id,  // Corrigido para incluir o ID do serviço
+            id: service.id,  
             name: service.name,
             price: service.price,
         });
-        setEditServiceModalOpen(true); // Abrir o modal de edição de serviço
+        setEditServiceModalOpen(true); 
     };
 
     const openRegisterBoxModal = async () => {
@@ -278,16 +268,14 @@ const Dashboard = () => {
         try {
             const q = query(collection(db, "services"));
             const querySnapshot = await getDocs(q);
-
-            // Atribuir o id gerado pelo Firestore a cada documento de serviço
             const services = querySnapshot.docs.map(doc => ({
-                id: doc.id,  // O id gerado pelo Firestore
-                ...doc.data() // Dados do documento, incluindo name e price
+                id: doc.id, 
+                ...doc.data() 
             }));
 
             console.log(services);
-            setServiceData(services);  // Atualiza o estado com os serviços e seus ids
-            setModalServiceDetailsOpen(true); // Abrir o modal de detalhes de serviços
+            setServiceData(services);  
+            setModalServiceDetailsOpen(true); 
         } catch (error) {
             console.error("Erro ao carregar os serviços: ", error);
         }
@@ -295,20 +283,18 @@ const Dashboard = () => {
 
     const handleOpenStockDetails = async () => {
         try {
-            // Consultar o banco de dados para obter os produtos do estoque
             const q = query(collection(db, "products"));
             const querySnapshot = await getDocs(q);
 
             const products = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             console.log(products);
-            setStockData(products); // Definir os dados do estoque
-            setModalStockDetailsOpen(true); // Abrir o modal
+            setStockData(products);
+            setModalStockDetailsOpen(true); 
         } catch (error) {
             console.error("Erro ao carregar o estoque: ", error);
         }
     };
 
-    // Função para fechar o modal de estoque
     const closeStockDetailsModal = () => {
         setModalStockDetailsOpen(false);
     };
@@ -330,17 +316,14 @@ const Dashboard = () => {
                 stock: parseInt(stock, 10)
             });
 
-            // Atualizar os dados na tabela
             setStockData(stockData.map(product =>
                 product.id === id ? { ...product, name, costPrice: parseFloat(costPrice), salePrice: parseFloat(salePrice), stock: parseInt(stock, 10) } : product
             ));
 
-            // Limpar campos e fechar modal de edição
             setEditProductModalOpen(false);
             setEditProductData({ id: '', name: '', costPrice: '', salePrice: '', stock: '' });
 
-            // Reabrir o modal de estoque
-            handleOpenStockDetails(); // Chama a função que abre o modal de estoque
+            handleOpenStockDetails(); 
 
             console.log("Produto atualizado com sucesso.");
         } catch (error) {
@@ -354,24 +337,19 @@ const Dashboard = () => {
         const { id, name, price } = editServiceData;
 
         try {
-            // Atualizar o documento de serviço no Firestore
             await updateDoc(doc(db, "services", id), {
                 name,
                 price: parseFloat(price),
             });
 
-            // Atualizar os dados na tabela local
             setServiceData(serviceData.map(service =>
                 service.id === id ? { ...service, name, price: parseFloat(price) } : service
             ));
 
-            // Fechar modal de edição
             setEditServiceModalOpen(false);
 
-            // Limpar dados de edição
             setEditServiceData({ id: '', name: '', price: '' });
 
-            // Reabrir o modal de serviços atualizado
             handleOpenServiceDetails();
 
             console.log("Serviço atualizado com sucesso.");
@@ -383,8 +361,7 @@ const Dashboard = () => {
         const confirmDelete = window.confirm("Você tem certeza que deseja excluir este produto?");
         if (confirmDelete) {
             try {
-                await deleteDoc(doc(db, "products", productId)); // Exclui o produto
-                // Atualizar a lista de produtos no estado
+                await deleteDoc(doc(db, "products", productId)); 
                 setStockData(stockData.filter(product => product.id !== productId));
                 console.log("Produto excluído com sucesso");
             } catch (error) {
@@ -394,17 +371,11 @@ const Dashboard = () => {
     };
 
     const handleDeleteService = async (serviceDocId) => {
-        // Confirmar a exclusão com o usuário
         const confirmDelete = window.confirm("Você tem certeza que deseja excluir este serviço?");
         if (confirmDelete) {
             try {
-                // Referência ao documento do serviço no Firestore, usando o Document ID
-                const serviceRef = doc(db, "services", serviceDocId); // O `serviceDocId` é o ID do documento Firestore
-
-                // Deletar o documento do serviço
+                const serviceRef = doc(db, "services", serviceDocId); 
                 await deleteDoc(serviceRef);
-
-                // Atualizar a lista de serviços local
                 setServiceData(prevData => prevData.filter(service => service.id !== serviceDocId));
 
                 console.log("Serviço deletado com sucesso.");
@@ -427,11 +398,11 @@ const Dashboard = () => {
             const weeksDifference = Math.floor((now - lastUpdateDate) / (1000 * 60 * 60 * 24 * 7));
 
             if (weeksDifference >= 1) {
-                setSalesData([]); // Reset data for new week
+                setSalesData([]); 
                 setLastUpdated(now);
             } else {
                 setSalesData(sales.sort((a, b) => new Date(b.event.start) - new Date(a.event.start)));
-                setFilteredSalesData(sales.sort((a, b) => new Date(b.event.start) - new Date(a.event.start))); // Initialize filtered sales
+                setFilteredSalesData(sales.sort((a, b) => new Date(b.event.start) - new Date(a.event.start))); 
             }
 
             setModalSalesDetailsOpen(true);
@@ -441,10 +412,9 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
-        setLastUpdated(new Date()); // Set current date on mount
+        setLastUpdated(new Date()); 
     }, []);
 
-    // Função para fechar o modal de vendas detalhadas
     const closeSalesDetailsModal = () => {
         setModalSalesDetailsOpen(false);
     };
@@ -497,7 +467,6 @@ const Dashboard = () => {
                 stock: parseInt(productQuantity, 10)
             });
 
-            // Limpar campos após salvar
             setProductName('');
             setProductCost('');
             setProductSalePrice('');
@@ -510,13 +479,11 @@ const Dashboard = () => {
         }
     };
 
-    // Função para abrir o caixa e carregar o saldo do dia anterior
     const handleOpenBox = async () => {
         try {
             const today = moment().format('YYYY-MM-DD');
             let initialBoxValue = 0;
 
-            // Verificar se já existe um caixa para o dia atual
             const querySnapshot = await getDocs(collection(db, "boxes"));
             const existingBox = querySnapshot.docs.find(doc => doc.data().date === today);
 
@@ -524,7 +491,7 @@ const Dashboard = () => {
                 const boxData = existingBox.data();
                 const professionalBalancesFromBox = boxData.professionals;
                 setProfessionalBalances(professionalBalancesFromBox);
-                setBoxValue(boxData.boxValue || initialBoxValue);  // Usar o valor existente, se houver
+                setBoxValue(boxData.boxValue || initialBoxValue);  
                 console.log("Caixa já registrado hoje. Exibindo os dados.");
             } else {
                 const professionalSnapshot = await getDocs(collection(db, "professionals"));
@@ -536,11 +503,10 @@ const Dashboard = () => {
 
                 setProfessionalBalances(professionalData);
 
-                // Criar novo registro do caixa para o dia atual, com o valor inicial do dia anterior
                 await addDoc(collection(db, "boxes"), {
                     date: today,
                     professionals: professionalData,
-                    boxValue: initialBoxValue  // Inicializar com o valor do dia anterior
+                    boxValue: initialBoxValue  
                 });
 
                 console.log("Caixa registrado com sucesso.");
@@ -551,13 +517,13 @@ const Dashboard = () => {
     };
 
     const handleAdjustMoney = async () => {
-        const valueToAdjust = parseFloat(adjustmentValue); // Pode ser positivo ou negativo
+        const valueToAdjust = parseFloat(adjustmentValue);
         if (isNaN(valueToAdjust)) {
             alert("Por favor, insira um valor válido.");
             return;
         }
 
-        const newBoxValue = boxValue + valueToAdjust; // Adiciona ou subtrai o valor do caixa
+        const newBoxValue = boxValue + valueToAdjust; 
         setBoxValue(newBoxValue);
 
         try {
@@ -572,16 +538,13 @@ const Dashboard = () => {
             console.error("Erro ao atualizar o valor do caixa: ", error);
         }
 
-        setAdjustmentValue('');  // Limpar o campo de ajuste
+        setAdjustmentValue('');  
     };
 
-
-    // Função para controlar as mudanças no input de ajuste de caixa
     const handleBoxInputChange = (e) => {
         setAdjustmentValue(e.target.value);
     };
 
-    // Função para controle de input dos dados do formulário
     const handleFormInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({
@@ -637,11 +600,9 @@ const Dashboard = () => {
                 });
 
                 if (conflictingEventDoc) {
-                    // Aviso de conflito
                     const confirmation = window.confirm("Já existe um agendamento nesse horário. Deseja substituir?");
                     if (confirmation) {
-                        // Substitui o agendamento existente
-                        await deleteDoc(doc(db, "schedules", conflictingEventDoc.id)); // Deleta o agendamento conflitante
+                        await deleteDoc(doc(db, "schedules", conflictingEventDoc.id)); 
 
                         await addDoc(collection(db, "schedules"), {
                             clientName: formData.clientName,
@@ -658,7 +619,6 @@ const Dashboard = () => {
                         console.log("O agendamento não foi substituído.");
                     }
                 } else {
-                    // Adiciona o novo agendamento, já que não há conflito
                     await addDoc(collection(db, "schedules"), {
                         clientName: formData.clientName,
                         service: formData.title,
@@ -668,8 +628,6 @@ const Dashboard = () => {
                     });
                 }
             }
-
-            // Atualiza os eventos exibidos no calendário
             setEvents((prevEvents) => [...prevEvents, ...newEvents]);
 
             closeModal();
@@ -938,8 +896,8 @@ const Dashboard = () => {
                                 type="button"
                                 className="fecharbotao"
                                 onClick={() => {
-                                    console.log("Fechar clicado!"); // Teste de clique
-                                    setEditServiceModalOpen(false); // Fecha o modal
+                                    console.log("Fechar clicado!");
+                                    setEditServiceModalOpen(false); 
                                 }}
                             >
                                 Fechar

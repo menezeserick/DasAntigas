@@ -1,11 +1,9 @@
-/* General Modal Styles */
 .modal {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: #232323;
-  /* Darker background for contrast */
   padding: 25px;
   border-radius: 10px;
   width: 50%;
@@ -13,7 +11,6 @@
   max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  /* Stronger shadow for depth */
   transition: all 0.3s ease-in-out;
   opacity: 0;
   visibility: hidden;
@@ -35,14 +32,12 @@ body {
   font-size: 20px;
   margin-bottom: 15px;
   color: #fff;
-  /* White for better contrast on dark background */
   text-align: center;
 }
 
 .modal h3 {
   font-size: 16px;
   color: #f2f2f2;
-  /* Lighter gray for subheadings */
   margin-bottom: 10px;
 }
 
@@ -69,9 +64,7 @@ body {
 .modal button {
   margin-top: 10px;
   background-color: #6B8E23;
-  /* Verde musgo suave */
   color: #FFFFFF;
-  /* Texto branco */
   padding: 10px;
   border: none;
   border-radius: 5px;
@@ -81,10 +74,8 @@ body {
 
 .modal button:hover {
   background-color: #556B2F;
-  /* Darker green on hover */
 }
 
-/* Overlay Styles */
 .modal-overlay {
   background-color: rgba(0, 0, 0, 0.7);
   position: fixed;
@@ -180,7 +171,6 @@ ul.selected-times li button:hover {
 
 button.fecharbotao {
   background-color: #B33A3A;
-  /* Vermelho bordô */
   color: #FFFFFF;
   padding: 10px 15px;
   font-size: 16px;
@@ -196,9 +186,7 @@ button.fecharbotao:hover {
 
 button.agendarbotao {
   background-color: #1E3A8A;
-  /* Azul claro */
   color: #FFFFFF;
-  /* Texto branco */
   padding: 10px 15px;
   font-size: 16px;
   border: none;
@@ -212,14 +200,12 @@ button.agendarbotao:hover {
 }
 
 
-/* Caixa Modal Custom Style */
 .modal-caixa {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: #232323;
-  /* Darker background for contrast */
   padding: 25px;
   border-radius: 10px;
   width: 50%;
@@ -227,7 +213,6 @@ button.agendarbotao:hover {
   max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  /* Stronger shadow for depth */
   transition: all 0.3s ease-in-out;
   opacity: 0;
   visibility: hidden;
@@ -244,23 +229,20 @@ button.agendarbotao:hover {
   font-size: 20px;
   margin-bottom: 15px;
   color: #fff;
-  /* White for better contrast on dark background */
   text-align: center;
 }
 
 .modal-caixa h3 {
   font-size: 16px;
   color: #f2f2f2;
-  /* Lighter gray for subheadings */
   margin-bottom: 10px;
 }
 
-/* Styling for Caixa Input and Adjust Button */
+
 .modal-caixa .box-adjust label {
   font-size: 14px;
   font-weight: bold;
   color: #b3b3b3;
-  /* Softer label color */
   margin-bottom: 5px;
   display: block;
 }
@@ -272,16 +254,13 @@ button.agendarbotao:hover {
   border-radius: 5px;
   font-size: 14px;
   background-color: #262626;
-  /* Darker input background */
   color: #f2f2f2;
   margin-bottom: 15px;
 }
 
 .modal-caixa .box-adjust button {
   background-color: #6B8E23;
-  /* Verde musgo suave */
   color: #FFFFFF;
-  /* Texto branco */
   border: none;
   padding: 10px;
   font-size: 16px;
@@ -292,10 +271,8 @@ button.agendarbotao:hover {
 
 .modal-caixa .box-adjust button:hover {
   background-color: #556B2F;
-  /* Darker green on hover */
 }
 
-/* List of Professional Balances */
 .modal-caixa ul {
   list-style: none;
   padding: 0;
@@ -316,45 +293,35 @@ button.agendarbotao:hover {
 
 .modal-caixa #detalhebotao {
   background-color: #1E3A8A;
-  /* Azul claro */
   margin-right: 10px;
   color: #FFFFFF;
-  /* Texto branco */
 }
 
 .modal-caixa #detalhebotao:hover {
   background-color: #162A63;
-  /* Cor azul escura ao passar o mouse */
 }
 
 .modal-caixa #versaldos {
   background-color: #1E3A8A;
-  /* Azul marinho */
   color: #FFFFFF;
-  /* Texto escuro */
   margin-right: 10px;
 }
 
 .modal-caixa #versaldos:hover {
   background-color: #162A63;
-  /* Cor azul escura ao passar o mouse */
 }
 
 .modal-open #detalhebotao {
   background-color: #1E3A8A;
-  /* Cor azul desejada */
   color: #fff;
 }
 
 .modal-open #detalhebotao:hover {
   background-color: #162A63;
-  /* Cor azul escura ao passar o mouse */
 }
 
-/* Close Button for Caixa Modal */
 .modal-caixa button {
   background-color: #B33A3A;
-  /* Vermelho bordô */
   color: #fff;
   padding: 10px 15px;
   font-size: 16px;
@@ -368,10 +335,8 @@ button.agendarbotao:hover {
   background-color: #7b0303;
 }
 
-/* Overlay for Caixa Modal */
 .modal-overlay-caixa {
   background-color: rgba(0, 0, 0, 0.8);
-  /* Slightly darker overlay */
   position: fixed;
   top: 0;
   left: 0;
@@ -411,7 +376,6 @@ button.agendarbotao:hover {
 }
 
 
-/* Modal Overlay for Sales */
 .modal-overlay-vendas {
   position: fixed;
   top: 0;
@@ -419,83 +383,62 @@ button.agendarbotao:hover {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.8);
-  /* Darkened background, more consistent with others */
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1001;
 }
 
-/* Sales Modal Styling */
 .modal-vendas {
   background-color: #232323;
-  /* Darker background for contrast */
   padding: 30px;
   border-radius: 10px;
   width: 80%;
   max-height: 80%;
   overflow-y: auto;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  /* Stronger shadow for depth */
   font-family: Arial, sans-serif;
   color: #f2f2f2;
-  /* Lighter text color */
 }
 
-/* Modal Title Styling */
 .modal-vendas h2 {
   font-size: 20px;
   margin-bottom: 15px;
   text-align: center;
   color: #fff;
-  /* White text for better contrast */
 }
 
-/* Table Styling for Excel-like appearance */
 .modal-vendas table {
   width: 100%;
   border-collapse: collapse;
   font-size: 16px;
 }
 
-/* Table Headers */
 .modal-vendas th {
   background-color: #3580dc;
-  /* Darker header background */
   color: #f2f2f2;
-  /* Lighter text for header */
   padding: 10px;
   border: 1px solid #444;
-  /* Slightly lighter border */
   text-align: left;
   font-weight: bold;
 }
 
-/* Table Body Rows */
 .modal-vendas td {
   padding: 10px;
   border: 1px solid #444;
-  /* Lighter borders for rows */
   text-align: left;
   background-color: #333;
-  /* Darker row background */
   color: #e0e0e0;
-  /* Lighter text for readability */
 }
 
-/* Alternating Row Colors for readability */
 .modal-vendas tbody tr:nth-child(even) {
   background-color: #2a2a2a;
-  /* Darker alternating row color */
 }
 
-/* Hover Effect on Rows */
 .modal-vendas tbody tr:hover {
   background-color: #3a3a3a;
-  /* Slight hover effect with darker color */
 }
 
-/* Close Button Styling */
 .modal-vendas button {
   background-color: #B33A3A;
   color: white;
@@ -515,7 +458,6 @@ button.agendarbotao:hover {
   background-color: #7b0303;
 }
 
-/* Mobile Responsiveness */
 @media (max-width: 768px) {
   .modal-vendas {
     width: 95%;
@@ -548,22 +490,16 @@ button.agendarbotao:hover {
   select,
   textarea {
     color: black !important;
-    /* Define a cor do texto */
   }
 
-  /* Remove as cores de foco automáticas */
   input:focus,
   select:focus,
   textarea:focus {
     color: black !important;
-    /* Cor do texto ao focar */
     outline: none;
-    /* Remove a borda azul padrão */
     border-color: black;
-    /* Se quiser personalizar a borda ao focar */
   }
 
-  /* Se o problema for em campos preenchidos (como em Safari mobile) */
   input:valid,
   select:valid,
   textarea:valid {
@@ -574,6 +510,5 @@ button.agendarbotao:hover {
   select:invalid,
   textarea:invalid {
     color: red;
-    /* Exemplo: altere a cor para vermelho se for inválido */
   }
 }
