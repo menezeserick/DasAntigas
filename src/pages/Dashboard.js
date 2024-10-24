@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Calendario from '../components/Calendario';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
@@ -42,6 +42,7 @@ const Dashboard = () => {
     const [filter, setFilter] = useState('all');
     const [balances, setBalances] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [filteredSalesData, setFilteredSalesData] = useState([]);
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -416,26 +417,21 @@ const Dashboard = () => {
 
     const handleOpenSalesDetails = async () => {
         try {
-            closeRegisterBoxModal();
-
             const q = query(collection(db, "vendas"));
             const querySnapshot = await getDocs(q);
 
             const sales = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-            // Verifica se é uma nova semana
             const now = new Date();
             const lastUpdateDate = new Date(lastUpdated);
-
-            // Calcula a diferença em semanas
             const weeksDifference = Math.floor((now - lastUpdateDate) / (1000 * 60 * 60 * 24 * 7));
 
             if (weeksDifference >= 1) {
-                // Resetar os dados se for uma nova semana
-                setSalesData([]); // Limpa os dados da tabela
-                setLastUpdated(now); // Atualiza a data da última atualização
+                setSalesData([]); // Reset data for new week
+                setLastUpdated(now);
             } else {
-                setSalesData(sales.sort((a, b) => new Date(b.start) - new Date(a.start))); // Ordena as vendas
+                setSalesData(sales.sort((a, b) => new Date(b.event.start) - new Date(a.event.start)));
+                setFilteredSalesData(sales.sort((a, b) => new Date(b.event.start) - new Date(a.event.start))); // Initialize filtered sales
             }
 
             setModalSalesDetailsOpen(true);
@@ -445,12 +441,44 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
-        setLastUpdated(new Date()); // Define a data atual na montagem
+        setLastUpdated(new Date()); // Set current date on mount
     }, []);
 
     // Função para fechar o modal de vendas detalhadas
     const closeSalesDetailsModal = () => {
         setModalSalesDetailsOpen(false);
+    };
+
+    const filterSalesByPeriod = (period) => {
+        const now = new Date();
+        let filteredSales;
+
+        switch (period) {
+            case 'day':
+                filteredSales = salesData.filter(sale => {
+                    let saleDate = sale.event.start instanceof Timestamp ? sale.event.start.toDate() : new Date(sale.event.start);
+                    return saleDate.toDateString() === now.toDateString();
+                });
+                break;
+            case 'week':
+                filteredSales = salesData.filter(sale => {
+                    let saleDate = sale.event.start instanceof Timestamp ? sale.event.start.toDate() : new Date(sale.event.start);
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(now.getDate() - 7);
+                    return saleDate >= oneWeekAgo && saleDate <= now;
+                });
+                break;
+            case 'month':
+                filteredSales = salesData.filter(sale => {
+                    let saleDate = sale.event.start instanceof Timestamp ? sale.event.start.toDate() : new Date(sale.event.start);
+                    return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
+                });
+                break;
+            default:
+                filteredSales = salesData;
+        }
+
+        setFilteredSalesData(filteredSales);
     };
 
     const handleAddProduct = async (e) => {
@@ -1099,7 +1127,6 @@ const Dashboard = () => {
                                 <button onClick={() => setFilter('all')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Todos os Caixas</button>
                             </div>
                         </div>
-
                         <table>
                             <thead>
                                 <tr>
@@ -1189,12 +1216,17 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
-
-
             {modalSalesDetailsOpen && (
                 <div className="modal-overlay-vendas" onClick={closeSalesDetailsModal}>
                     <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <h2>Vendas Detalhadas</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <h2 style={{ margin: '0', paddingRight: '20px' }}>Vendas</h2>
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                                <button onClick={() => filterSalesByPeriod('day')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Vendas do Dia</button>
+                                <button onClick={() => filterSalesByPeriod('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Vendas da Semana</button>
+                                <button onClick={() => filterSalesByPeriod('month')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Vendas do Mês</button>
+                            </div>
+                        </div>
                         <table>
                             <thead>
                                 <tr>
@@ -1207,33 +1239,36 @@ const Dashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {salesData
-                                    .map((sale) => (
-                                        <tr key={sale.id}>
-                                            <td>{sale.event.title || "Cliente Desconhecido"}</td>
-                                            <td>
-                                                {sale.services.map(service => (
-                                                    <div key={service.id}>
-                                                        {service.name} - Quantidade: {service.quantity} - Valor: R$ {service.price.toFixed(2)}
-                                                        <br />
-                                                        Profissional: {service.professionalName} - Valor Recebido: R$ {service.valorLiquido.toFixed(2)}
-                                                    </div>
-                                                ))}
-                                            </td>
-                                            <td>
-                                                {sale.products.map(product => (
-                                                    <div key={product.id}>
-                                                        {product.name} - Quantidade: {product.quantity} - Valor: R$ {product.salePrice.toFixed(2)}
-                                                        <br />
-                                                        Profissional: {product.professionalName} - Valor Recebido: R$ {product.valorLiquido.toFixed(2)}
-                                                    </div>
-                                                ))}
-                                            </td>
-                                            <td>R$ {sale.totalPrice.toFixed(2)}</td>
-                                            <td>R$ {sale.netTotal.toFixed(2)}</td>
-                                            <td>{sale.paymentMethod}</td>
-                                        </tr>
-                                    ))}
+                                {filteredSalesData.length > 0 ? filteredSalesData.map((sale) => (
+                                    <tr key={sale.id}>
+                                        <td>{sale.event.title || "Cliente Desconhecido"}</td>
+                                        <td>
+                                            {sale.services?.map(service => (
+                                                <div key={service.id}>
+                                                    {service.name} - Quantidade: {service.quantity} - Valor: R$ {service.price.toFixed(2)}
+                                                    <br />
+                                                    Profissional: {service.professionalName} - Valor Recebido: R$ {service.valorLiquido.toFixed(2)}
+                                                </div>
+                                            ))}
+                                        </td>
+                                        <td>
+                                            {sale.products?.map(product => (
+                                                <div key={product.id}>
+                                                    {product.name} - Quantidade: {product.quantity} - Valor: R$ {product.salePrice.toFixed(2)}
+                                                    <br />
+                                                    Profissional: {product.professionalName} - Valor Recebido: R$ {product.valorLiquido.toFixed(2)}
+                                                </div>
+                                            ))}
+                                        </td>
+                                        <td>R$ {sale.totalPrice.toFixed(2)}</td>
+                                        <td>R$ {sale.netTotal.toFixed(2)}</td>
+                                        <td>{sale.paymentMethod}</td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="6">Nenhuma venda encontrada para o período selecionado.</td>
+                                    </tr>
+                                )}
                             </tbody>
 
                         </table>

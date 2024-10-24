@@ -4,14 +4,16 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #232323; /* Darker background for contrast */
+  background-color: #232323;
+  /* Darker background for contrast */
   padding: 25px;
   border-radius: 10px;
   width: 50%;
   max-width: 600px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Stronger shadow for depth */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  /* Stronger shadow for depth */
   transition: all 0.3s ease-in-out;
   opacity: 0;
   visibility: hidden;
@@ -32,13 +34,15 @@ body {
 .modal h2 {
   font-size: 20px;
   margin-bottom: 15px;
-  color: #fff; /* White for better contrast on dark background */
+  color: #fff;
+  /* White for better contrast on dark background */
   text-align: center;
 }
 
 .modal h3 {
   font-size: 16px;
-  color: #f2f2f2; /* Lighter gray for subheadings */
+  color: #f2f2f2;
+  /* Lighter gray for subheadings */
   margin-bottom: 10px;
 }
 
@@ -64,8 +68,10 @@ body {
 
 .modal button {
   margin-top: 10px;
-  background-color: #6B8E23; /* Verde musgo suave */
-  color: #FFFFFF; /* Texto branco */
+  background-color: #6B8E23;
+  /* Verde musgo suave */
+  color: #FFFFFF;
+  /* Texto branco */
   padding: 10px;
   border: none;
   border-radius: 5px;
@@ -74,7 +80,8 @@ body {
 }
 
 .modal button:hover {
-  background-color: #556B2F; /* Darker green on hover */
+  background-color: #556B2F;
+  /* Darker green on hover */
 }
 
 /* Overlay Styles */
@@ -172,7 +179,8 @@ ul.selected-times li button:hover {
 }
 
 button.fecharbotao {
-  background-color: #B33A3A; /* Vermelho bordô */
+  background-color: #B33A3A;
+  /* Vermelho bordô */
   color: #FFFFFF;
   padding: 10px 15px;
   font-size: 16px;
@@ -186,9 +194,11 @@ button.fecharbotao:hover {
   background-color: #7b0303;
 }
 
-button.agendarbotao{
-  background-color: #1E3A8A; /* Azul claro */
-  color: #FFFFFF; /* Texto branco */
+button.agendarbotao {
+  background-color: #1E3A8A;
+  /* Azul claro */
+  color: #FFFFFF;
+  /* Texto branco */
   padding: 10px 15px;
   font-size: 16px;
   border: none;
@@ -208,14 +218,16 @@ button.agendarbotao:hover {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #232323; /* Darker background for contrast */
+  background-color: #232323;
+  /* Darker background for contrast */
   padding: 25px;
   border-radius: 10px;
   width: 50%;
   max-width: 600px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Stronger shadow for depth */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  /* Stronger shadow for depth */
   transition: all 0.3s ease-in-out;
   opacity: 0;
   visibility: hidden;
@@ -231,13 +243,15 @@ button.agendarbotao:hover {
 .modal-caixa h2 {
   font-size: 20px;
   margin-bottom: 15px;
-  color: #fff; /* White for better contrast on dark background */
+  color: #fff;
+  /* White for better contrast on dark background */
   text-align: center;
 }
 
 .modal-caixa h3 {
   font-size: 16px;
-  color: #f2f2f2; /* Lighter gray for subheadings */
+  color: #f2f2f2;
+  /* Lighter gray for subheadings */
   margin-bottom: 10px;
 }
 
@@ -245,7 +259,8 @@ button.agendarbotao:hover {
 .modal-caixa .box-adjust label {
   font-size: 14px;
   font-weight: bold;
-  color: #b3b3b3; /* Softer label color */
+  color: #b3b3b3;
+  /* Softer label color */
   margin-bottom: 5px;
   display: block;
 }
@@ -256,14 +271,17 @@ button.agendarbotao:hover {
   border: 1px solid #737373;
   border-radius: 5px;
   font-size: 14px;
-  background-color: #262626; /* Darker input background */
+  background-color: #262626;
+  /* Darker input background */
   color: #f2f2f2;
   margin-bottom: 15px;
 }
 
 .modal-caixa .box-adjust button {
-  background-color: #6B8E23; /* Verde musgo suave */
-  color: #FFFFFF; /* Texto branco */
+  background-color: #6B8E23;
+  /* Verde musgo suave */
+  color: #FFFFFF;
+  /* Texto branco */
   border: none;
   padding: 10px;
   font-size: 16px;
@@ -273,7 +291,8 @@ button.agendarbotao:hover {
 }
 
 .modal-caixa .box-adjust button:hover {
-  background-color: #556B2F;/* Darker green on hover */
+  background-color: #556B2F;
+  /* Darker green on hover */
 }
 
 /* List of Professional Balances */
@@ -296,36 +315,46 @@ button.agendarbotao:hover {
 }
 
 .modal-caixa #detalhebotao {
-  background-color: #1E3A8A; /* Azul claro */
+  background-color: #1E3A8A;
+  /* Azul claro */
   margin-right: 10px;
-  color: #FFFFFF; /* Texto branco */
+  color: #FFFFFF;
+  /* Texto branco */
 }
 
 .modal-caixa #detalhebotao:hover {
-  background-color: #162A63; /* Cor azul escura ao passar o mouse */
+  background-color: #162A63;
+  /* Cor azul escura ao passar o mouse */
 }
 
 .modal-caixa #versaldos {
-  background-color: #1E3A8A; /* Azul marinho */
-  color: #FFFFFF; /* Texto escuro */
+  background-color: #1E3A8A;
+  /* Azul marinho */
+  color: #FFFFFF;
+  /* Texto escuro */
   margin-right: 10px;
 }
 
 .modal-caixa #versaldos:hover {
-  background-color: #162A63; /* Cor azul escura ao passar o mouse */
+  background-color: #162A63;
+  /* Cor azul escura ao passar o mouse */
 }
 
 .modal-open #detalhebotao {
-  background-color: #1E3A8A; /* Cor azul desejada */
+  background-color: #1E3A8A;
+  /* Cor azul desejada */
   color: #fff;
 }
 
 .modal-open #detalhebotao:hover {
-  background-color: #162A63; /* Cor azul escura ao passar o mouse */
+  background-color: #162A63;
+  /* Cor azul escura ao passar o mouse */
 }
+
 /* Close Button for Caixa Modal */
 .modal-caixa button {
-  background-color: #B33A3A; /* Vermelho bordô */
+  background-color: #B33A3A;
+  /* Vermelho bordô */
   color: #fff;
   padding: 10px 15px;
   font-size: 16px;
@@ -341,7 +370,8 @@ button.agendarbotao:hover {
 
 /* Overlay for Caixa Modal */
 .modal-overlay-caixa {
-  background-color: rgba(0, 0, 0, 0.8); /* Slightly darker overlay */
+  background-color: rgba(0, 0, 0, 0.8);
+  /* Slightly darker overlay */
   position: fixed;
   top: 0;
   left: 0;
@@ -388,7 +418,8 @@ button.agendarbotao:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.8); /* Darkened background, more consistent with others */
+  background-color: rgba(0, 0, 0, 0.8);
+  /* Darkened background, more consistent with others */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -397,15 +428,18 @@ button.agendarbotao:hover {
 
 /* Sales Modal Styling */
 .modal-vendas {
-  background-color: #232323; /* Darker background for contrast */
+  background-color: #232323;
+  /* Darker background for contrast */
   padding: 30px;
   border-radius: 10px;
   width: 80%;
   max-height: 80%;
   overflow-y: auto;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Stronger shadow for depth */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  /* Stronger shadow for depth */
   font-family: Arial, sans-serif;
-  color: #f2f2f2; /* Lighter text color */
+  color: #f2f2f2;
+  /* Lighter text color */
 }
 
 /* Modal Title Styling */
@@ -413,7 +447,8 @@ button.agendarbotao:hover {
   font-size: 20px;
   margin-bottom: 15px;
   text-align: center;
-  color: #fff; /* White text for better contrast */
+  color: #fff;
+  /* White text for better contrast */
 }
 
 /* Table Styling for Excel-like appearance */
@@ -425,10 +460,13 @@ button.agendarbotao:hover {
 
 /* Table Headers */
 .modal-vendas th {
-  background-color: #3580dc; /* Darker header background */
-  color: #f2f2f2; /* Lighter text for header */
+  background-color: #3580dc;
+  /* Darker header background */
+  color: #f2f2f2;
+  /* Lighter text for header */
   padding: 10px;
-  border: 1px solid #444; /* Slightly lighter border */
+  border: 1px solid #444;
+  /* Slightly lighter border */
   text-align: left;
   font-weight: bold;
 }
@@ -436,20 +474,25 @@ button.agendarbotao:hover {
 /* Table Body Rows */
 .modal-vendas td {
   padding: 10px;
-  border: 1px solid #444; /* Lighter borders for rows */
+  border: 1px solid #444;
+  /* Lighter borders for rows */
   text-align: left;
-  background-color: #333; /* Darker row background */
-  color: #e0e0e0; /* Lighter text for readability */
+  background-color: #333;
+  /* Darker row background */
+  color: #e0e0e0;
+  /* Lighter text for readability */
 }
 
 /* Alternating Row Colors for readability */
 .modal-vendas tbody tr:nth-child(even) {
-  background-color: #2a2a2a; /* Darker alternating row color */
+  background-color: #2a2a2a;
+  /* Darker alternating row color */
 }
 
 /* Hover Effect on Rows */
 .modal-vendas tbody tr:hover {
-  background-color: #3a3a3a; /* Slight hover effect with darker color */
+  background-color: #3a3a3a;
+  /* Slight hover effect with darker color */
 }
 
 /* Close Button Styling */
@@ -478,8 +521,8 @@ button.agendarbotao:hover {
     width: 95%;
   }
 
-  .modal-vendas table, 
-  .modal-vendas th, 
+  .modal-vendas table,
+  .modal-vendas th,
   .modal-vendas td {
     font-size: 14px;
   }
@@ -491,7 +534,7 @@ button.agendarbotao:hover {
     padding: 20px;
   }
 
-  .modal-vendas th, 
+  .modal-vendas th,
   .modal-vendas td {
     padding: 8px;
   }
@@ -499,5 +542,38 @@ button.agendarbotao:hover {
   .modal-vendas button {
     padding: 8px 12px;
     font-size: 14px;
+  }
+
+  input,
+  select,
+  textarea {
+    color: black !important;
+    /* Define a cor do texto */
+  }
+
+  /* Remove as cores de foco automáticas */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    color: black !important;
+    /* Cor do texto ao focar */
+    outline: none;
+    /* Remove a borda azul padrão */
+    border-color: black;
+    /* Se quiser personalizar a borda ao focar */
+  }
+
+  /* Se o problema for em campos preenchidos (como em Safari mobile) */
+  input:valid,
+  select:valid,
+  textarea:valid {
+    color: black !important;
+  }
+
+  input:invalid,
+  select:invalid,
+  textarea:invalid {
+    color: red;
+    /* Exemplo: altere a cor para vermelho se for inválido */
   }
 }
