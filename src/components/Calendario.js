@@ -171,22 +171,25 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 const professional = professionals.find(prof => prof.id === service.selectedProfessional);
                 const professionalName = professional?.title;
 
+                const valorVenda = service.price * service.quantity;
+                const custoTotal = service.costPrice * service.quantity; // Calcula o custo total
+
                 let comissao = 0;
-                let valorLiquido = service.price * service.quantity;
-                const originalSaleValue = valorLiquido;
+                let valorLiquido = valorVenda - custoTotal;
 
                 if (professionalName !== 'teste') {
-                    comissao = 0.45 * valorLiquido; 
-                    valorLiquido -= comissao; 
+                    comissao = 0.45 * valorLiquido; // Aplica comissão de 55%
+                    valorLiquido -= comissao;
                 }
 
                 return {
                     ...service,
                     comissao,
                     valorLiquido,
-                    originalSaleValue,
+                    originalSaleValue: valorVenda,
+                    costPrice: service.costPrice,
                     professionalId: service.selectedProfessional,
-                    professionalName: professionalName 
+                    professionalName: professionalName,
                 };
             });
 
@@ -194,34 +197,38 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             for (const product of selectedProducts) {
                 const professionalName = professionals.find(prof => prof.id === product.selectedProfessional)?.title;
 
+                let valorBase = (product.salePrice - product.costPrice) * product.quantity; // Subtraí o preço de custo do preço de venda
                 let comissao = 0;
-                let valorLiquido = product.salePrice * product.quantity;
-                const originalSaleValue = valorLiquido; 
+                let valorLiquido = valorBase;
+                const originalSaleValue = product.salePrice * product.quantity; // Valor total antes da subtração do custo
 
+                // Aplica a comissão somente se o profissional não for "teste"
                 if (professionalName !== 'teste') {
-                    comissao = 0.15 * valorLiquido; 
-                    valorLiquido -= comissao; 
+                    comissao = 0.15 * valorBase; // Calcula a comissão sobre o valor base
+                    valorLiquido -= comissao; // Subtrai a comissão do valor base
                 }
 
                 const newStock = product.stock - product.quantity;
 
-                if (newStock >= 0) { 
+                // Verifica o estoque
+                if (newStock >= 0) {
                     await updateDoc(doc(db, "products", product.id), { stock: newStock });
                 } else {
                     setErrorMessage(`O produto "${product.name}" não possui estoque suficiente. Estoque disponível: ${product.stock}`);
-                    return; 
+                    return;
                 }
 
                 processedProducts.push({
                     ...product,
-                    valorTotal: product.salePrice * product.quantity,
+                    valorTotal: product.salePrice * product.quantity, // Valor total antes de subtrair o custo
                     comissao,
                     valorLiquido,
-                    originalSaleValue, 
+                    originalSaleValue,
                     professionalId: product.selectedProfessional,
                     professionalName: professionalName
                 });
             }
+
             const totalPrice = processedServices.reduce((total, service) => total + (service.price * service.quantity), 0)
                 + processedProducts.reduce((total, product) => total + (product.salePrice * product.quantity), 0);
 
@@ -265,11 +272,11 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 if (!professionalBalances[professionalId]) {
                     professionalBalances[professionalId] = {
                         total: 0,
-                        originalSaleValue: 0, 
+                        originalSaleValue: 0,
                     };
                 }
-                professionalBalances[professionalId].total += service.valorLiquido; 
-                professionalBalances[professionalId].originalSaleValue += service.originalSaleValue; 
+                professionalBalances[professionalId].total += service.valorLiquido;
+                professionalBalances[professionalId].originalSaleValue += service.originalSaleValue;
             });
 
             processedProducts.forEach(product => {
@@ -280,8 +287,8 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                         originalSaleValue: 0,
                     };
                 }
-                professionalBalances[professionalId].total += product.valorLiquido; 
-                professionalBalances[professionalId].originalSaleValue += product.valorTotal; 
+                professionalBalances[professionalId].total += product.valorLiquido;
+                professionalBalances[professionalId].originalSaleValue += product.valorTotal;
             });
 
             for (const professionalId of Object.keys(professionalBalances)) {
@@ -540,7 +547,7 @@ const Calendario = ({ events, professionals = [] }) => {
     };
     const handleSelectSlot = (slotInfo) => {
         setSelectedDate(slotInfo.start);
-        setSelectedEvent(null); 
+        setSelectedEvent(null);
     };
 
     const handleComplete = (completionData) => {
@@ -583,8 +590,8 @@ const Calendario = ({ events, professionals = [] }) => {
                     resourceTitleAccessor="title"
                     className="calendar"
                     onNavigate={handleNavigate}
-                    selectable={true}  
-                    onSelectSlot={handleSelectSlot}  
+                    selectable={true}
+                    onSelectSlot={handleSelectSlot}
                     components={{
                         event: () => null
                     }}
@@ -659,8 +666,8 @@ const Calendario = ({ events, professionals = [] }) => {
                         resourceTitleAccessor="title"
                         className="calendar"
                         onNavigate={handleNavigate}
-                        selectable={true}  
-                        onSelectSlot={handleSelectSlot}  
+                        selectable={true}
+                        onSelectSlot={handleSelectSlot}
                         components={{
                             event: () => null
                         }}

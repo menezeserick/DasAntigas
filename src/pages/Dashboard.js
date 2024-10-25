@@ -146,8 +146,8 @@ const Dashboard = () => {
                         date: data.date,
                         name: prof.name,
                         balance: parseFloat(prof.balance) || 0,
-                        totalAmount: totalAmount,  
-                        timestamp: new Date(data.date),  
+                        totalAmount: totalAmount,
+                        timestamp: new Date(data.date),
                     });
                 });
             });
@@ -189,7 +189,7 @@ const Dashboard = () => {
             start = moment().startOf('month').format('YYYY-MM-DD');
             end = moment().endOf('month').format('YYYY-MM-DD');
         } else {
-            start = '2020-01-01'; 
+            start = '2020-01-01';
             end = moment().format('YYYY-MM-DD');
         }
 
@@ -249,13 +249,13 @@ const Dashboard = () => {
     };
 
     const handleEditService = (service) => {
-        closeServiceDetailsModal(); 
+        closeServiceDetailsModal();
         setEditServiceData({
-            id: service.id,  
+            id: service.id,
             name: service.name,
             price: service.price,
         });
-        setEditServiceModalOpen(true); 
+        setEditServiceModalOpen(true);
     };
 
     const openRegisterBoxModal = async () => {
@@ -269,13 +269,13 @@ const Dashboard = () => {
             const q = query(collection(db, "services"));
             const querySnapshot = await getDocs(q);
             const services = querySnapshot.docs.map(doc => ({
-                id: doc.id, 
-                ...doc.data() 
+                id: doc.id,
+                ...doc.data()
             }));
 
             console.log(services);
-            setServiceData(services);  
-            setModalServiceDetailsOpen(true); 
+            setServiceData(services);
+            setModalServiceDetailsOpen(true);
         } catch (error) {
             console.error("Erro ao carregar os serviços: ", error);
         }
@@ -289,7 +289,7 @@ const Dashboard = () => {
             const products = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             console.log(products);
             setStockData(products);
-            setModalStockDetailsOpen(true); 
+            setModalStockDetailsOpen(true);
         } catch (error) {
             console.error("Erro ao carregar o estoque: ", error);
         }
@@ -323,7 +323,7 @@ const Dashboard = () => {
             setEditProductModalOpen(false);
             setEditProductData({ id: '', name: '', costPrice: '', salePrice: '', stock: '' });
 
-            handleOpenStockDetails(); 
+            handleOpenStockDetails();
 
             console.log("Produto atualizado com sucesso.");
         } catch (error) {
@@ -361,7 +361,7 @@ const Dashboard = () => {
         const confirmDelete = window.confirm("Você tem certeza que deseja excluir este produto?");
         if (confirmDelete) {
             try {
-                await deleteDoc(doc(db, "products", productId)); 
+                await deleteDoc(doc(db, "products", productId));
                 setStockData(stockData.filter(product => product.id !== productId));
                 console.log("Produto excluído com sucesso");
             } catch (error) {
@@ -374,7 +374,7 @@ const Dashboard = () => {
         const confirmDelete = window.confirm("Você tem certeza que deseja excluir este serviço?");
         if (confirmDelete) {
             try {
-                const serviceRef = doc(db, "services", serviceDocId); 
+                const serviceRef = doc(db, "services", serviceDocId);
                 await deleteDoc(serviceRef);
                 setServiceData(prevData => prevData.filter(service => service.id !== serviceDocId));
 
@@ -398,11 +398,11 @@ const Dashboard = () => {
             const weeksDifference = Math.floor((now - lastUpdateDate) / (1000 * 60 * 60 * 24 * 7));
 
             if (weeksDifference >= 1) {
-                setSalesData([]); 
+                setSalesData([]);
                 setLastUpdated(now);
             } else {
                 setSalesData(sales.sort((a, b) => new Date(b.event.start) - new Date(a.event.start)));
-                setFilteredSalesData(sales.sort((a, b) => new Date(b.event.start) - new Date(a.event.start))); 
+                setFilteredSalesData(sales.sort((a, b) => new Date(b.event.start) - new Date(a.event.start)));
             }
 
             setModalSalesDetailsOpen(true);
@@ -412,7 +412,7 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
-        setLastUpdated(new Date()); 
+        setLastUpdated(new Date());
     }, []);
 
     const closeSalesDetailsModal = () => {
@@ -491,7 +491,7 @@ const Dashboard = () => {
                 const boxData = existingBox.data();
                 const professionalBalancesFromBox = boxData.professionals;
                 setProfessionalBalances(professionalBalancesFromBox);
-                setBoxValue(boxData.boxValue || initialBoxValue);  
+                setBoxValue(boxData.boxValue || initialBoxValue);
                 console.log("Caixa já registrado hoje. Exibindo os dados.");
             } else {
                 const professionalSnapshot = await getDocs(collection(db, "professionals"));
@@ -506,7 +506,7 @@ const Dashboard = () => {
                 await addDoc(collection(db, "boxes"), {
                     date: today,
                     professionals: professionalData,
-                    boxValue: initialBoxValue  
+                    boxValue: initialBoxValue
                 });
 
                 console.log("Caixa registrado com sucesso.");
@@ -523,7 +523,7 @@ const Dashboard = () => {
             return;
         }
 
-        const newBoxValue = boxValue + valueToAdjust; 
+        const newBoxValue = boxValue + valueToAdjust;
         setBoxValue(newBoxValue);
 
         try {
@@ -538,7 +538,7 @@ const Dashboard = () => {
             console.error("Erro ao atualizar o valor do caixa: ", error);
         }
 
-        setAdjustmentValue('');  
+        setAdjustmentValue('');
     };
 
     const handleBoxInputChange = (e) => {
@@ -602,7 +602,7 @@ const Dashboard = () => {
                 if (conflictingEventDoc) {
                     const confirmation = window.confirm("Já existe um agendamento nesse horário. Deseja substituir?");
                     if (confirmation) {
-                        await deleteDoc(doc(db, "schedules", conflictingEventDoc.id)); 
+                        await deleteDoc(doc(db, "schedules", conflictingEventDoc.id));
 
                         await addDoc(collection(db, "schedules"), {
                             clientName: formData.clientName,
@@ -653,25 +653,31 @@ const Dashboard = () => {
 
     const handleAddService = async (e) => {
         e.preventDefault();
-
+    
         const serviceName = e.target.serviceName.value;
         const servicePrice = parseFloat(e.target.servicePrice.value);
-
+        const serviceCostPrice = e.target.serviceCostPrice.value ? parseFloat(e.target.serviceCostPrice.value) : null;
+    
         if (!serviceName || isNaN(servicePrice)) {
             console.error("Nome ou preço do serviço estão ausentes.");
             return;
         }
+    
         try {
-            await addDoc(collection(db, "services"), {
+            const docRef = await addDoc(collection(db, "services"), {
                 name: serviceName,
                 price: servicePrice,
+                costPrice: serviceCostPrice,
             });
-            setServices([...services, { name: serviceName, price: servicePrice }]);
+    
+            setServices([...services, { id: docRef.id, name: serviceName, price: servicePrice, costPrice: serviceCostPrice }]);
+    
             closeServiceModal();
         } catch (error) {
             console.error("Erro ao adicionar serviço: ", error);
         }
     };
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -823,8 +829,13 @@ const Dashboard = () => {
                         <form onSubmit={handleAddService}>
                             <label>Nome do Serviço:</label>
                             <input type="text" name="serviceName" required />
+
                             <label>Preço do Serviço:</label>
                             <input type="number" step="0.01" name="servicePrice" required />
+
+                            <label>Preço de Custo (Opcional):</label>
+                            <input type="number" step="0.01" name="serviceCostPrice" /> {/* Remove `required` */}
+
                             <button type="submit">Adicionar</button>
                             <button id="detalhebotao" type="button" onClick={handleOpenServiceDetails}>Ver Serviços</button>
                             <button type="button" className="fecharbotao" onClick={closeServiceModal}>Fechar</button>
@@ -832,6 +843,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
+
 
             {isModalServiceDetailsOpen && (
                 <div className="modal-overlay-vendas" onClick={closeServiceDetailsModal}>
@@ -843,6 +855,7 @@ const Dashboard = () => {
                                     <tr>
                                         <th>Nome do Serviço</th>
                                         <th>Preço</th>
+                                        <th>Preço de Custo</th> {/* Nova coluna para o preço de custo */}
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -851,6 +864,7 @@ const Dashboard = () => {
                                         <tr key={services.id}>
                                             <td>{services.name}</td>
                                             <td>{Number.isFinite(services.price) ? `R$ ${services.price.toFixed(2)}` : 'N/A'}</td>
+                                            <td>{Number.isFinite(services.costPrice) ? `R$ ${services.costPrice.toFixed(2)}` : 'N/A'}</td> {/* Exibe o preço de custo */}
                                             <td>
                                                 <FaEdit onClick={() => handleEditService(services)} style={{ cursor: 'pointer', marginRight: '10px' }} />
                                                 <FaTrash onClick={() => handleDeleteService(services.id)} style={{ cursor: 'pointer', color: 'red' }} />
@@ -897,7 +911,7 @@ const Dashboard = () => {
                                 className="fecharbotao"
                                 onClick={() => {
                                     console.log("Fechar clicado!");
-                                    setEditServiceModalOpen(false); 
+                                    setEditServiceModalOpen(false);
                                 }}
                             >
                                 Fechar
