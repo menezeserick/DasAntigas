@@ -393,6 +393,8 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         handleAddCompletion(e);
     };
 
+    
+
     return (
         <div className={`modal-overlay modal-overlay-open`}>
             <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>
@@ -447,8 +449,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                             </li>
                         ))}
                     </ul>
-
-
                     <label>Produtos:</label>
                     <select onChange={(e) => handleProductChange(e.target.value)}>
                         <option value="">Selecione um produto</option>

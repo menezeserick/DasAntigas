@@ -6,6 +6,7 @@ import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
 import Header from '../components/Header';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { v4 as uuidv4 } from 'uuid';
 import { subDays, subMonths, isWithinInterval } from 'date-fns';
 
 const Dashboard = () => {
@@ -586,7 +587,8 @@ const Dashboard = () => {
                     title: `${formData.clientName} - ${formData.title}`,
                     start: start,
                     end: end,
-                    resourceId: professional.id
+                    resourceId: professional.id,
+                    id: uuidv4() // Gera um ID único para o evento
                 };
             });
 
@@ -604,27 +606,28 @@ const Dashboard = () => {
                     if (confirmation) {
                         await deleteDoc(doc(db, "schedules", conflictingEventDoc.id));
 
+                        // Agora inclui o ID no novo agendamento
                         await addDoc(collection(db, "schedules"), {
                             clientName: formData.clientName,
                             service: formData.title,
                             professional: formData.professional,
                             date: moment(event.start).format("YYYY-MM-DD"),
-                            time: moment(event.start).format("HH:mm")
+                            time: moment(event.start).format("HH:mm"),
+                            id: event.id // Adiciona o ID aqui
                         });
-
-                        window.location.reload();
-
                         console.log("Agendamento substituído com sucesso.");
                     } else {
                         console.log("O agendamento não foi substituído.");
                     }
                 } else {
+                    // Inclui o ID no novo agendamento
                     await addDoc(collection(db, "schedules"), {
                         clientName: formData.clientName,
                         service: formData.title,
                         professional: formData.professional,
                         date: moment(event.start).format("YYYY-MM-DD"),
-                        time: moment(event.start).format("HH:mm")
+                        time: moment(event.start).format("HH:mm"),
+                        id: event.id // Adiciona o ID aqui
                     });
                 }
             }
@@ -653,25 +656,25 @@ const Dashboard = () => {
 
     const handleAddService = async (e) => {
         e.preventDefault();
-    
+
         const serviceName = e.target.serviceName.value;
         const servicePrice = parseFloat(e.target.servicePrice.value);
         const serviceCostPrice = e.target.serviceCostPrice.value ? parseFloat(e.target.serviceCostPrice.value) : null;
-    
+
         if (!serviceName || isNaN(servicePrice)) {
             console.error("Nome ou preço do serviço estão ausentes.");
             return;
         }
-    
+
         try {
             const docRef = await addDoc(collection(db, "services"), {
                 name: serviceName,
                 price: servicePrice,
                 costPrice: serviceCostPrice,
             });
-    
+
             setServices([...services, { id: docRef.id, name: serviceName, price: servicePrice, costPrice: serviceCostPrice }]);
-    
+
             closeServiceModal();
         } catch (error) {
             console.error("Erro ao adicionar serviço: ", error);
@@ -740,6 +743,7 @@ const Dashboard = () => {
         }
         return options;
     };
+    
 
     return (
         <div className="container">
