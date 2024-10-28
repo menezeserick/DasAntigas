@@ -588,6 +588,7 @@ button.agendarbotao:hover {
   .modal-vendas td {
     padding: 0.75rem;
     font-size: 15px;
+    width: 60%;
   }
 
   .modal-vendas input,
@@ -615,6 +616,7 @@ button.agendarbotao:hover {
   .modal-vendas td {
     padding: 0.5rem;
     font-size: 14px;
+    width: 60%;
   }
 
   .modal-vendas input,
@@ -648,6 +650,7 @@ button.agendarbotao:hover {
   .modal-vendas td {
     padding: 0.4rem;
     font-size: 13px;
+    width: 60%;
   }
 
   .modal-vendas input,

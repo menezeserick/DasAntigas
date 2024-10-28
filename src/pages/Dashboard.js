@@ -8,6 +8,7 @@ import Header from '../components/Header';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { subDays, subMonths, isWithinInterval } from 'date-fns';
+import { auth } from '../firebaseConfig';
 
 const Dashboard = () => {
     const [events, setEvents] = useState([]);
@@ -44,6 +45,7 @@ const Dashboard = () => {
     const [balances, setBalances] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filteredSalesData, setFilteredSalesData] = useState([]);
+    const [currentUserUID, setCurrentUserUID] = useState(null);
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -81,6 +83,20 @@ const Dashboard = () => {
     const closeProfessionalBalancesModal = () => setModalProfessionalBalancesOpen(false);
     const closeMonthlyBalancesModal = () => setModalMonthlyBalancesOpen(false);
     const closeOpenBoxesModal = () => setModalOpenBoxesOpen(false);
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (user) {
+                setCurrentUserUID(user.uid);
+            } else {
+                setCurrentUserUID(null);
+            }
+        });
+
+        // Limpar o listener ao desmontar o componente
+        return () => unsubscribe();
+    }, []);
+
 
 
     const fetchBalances = async (start, end) => {
@@ -755,6 +771,7 @@ const Dashboard = () => {
                 openServiceModal={openServiceModal}
                 openRegisterBoxModal={openRegisterBoxModal}
                 openProductModal={openProductModal}
+                currentUserUID={currentUserUID} 
             />
 
 
@@ -773,7 +790,7 @@ const Dashboard = () => {
                             <label>Nome do Cliente:</label>
                             <input type="text" name="clientName" onChange={handleFormInputChange} required />
                             <label>Serviço:</label>
-                            <select name="title" onChange={handleFormInputChange} required>
+                            <select name="title" onChange={handleFormInputChange}>
                                 <option value="">Selecione um serviço</option>
                                 {services.map((service, index) => (
                                     <option key={index} value={service.name}>{service.name}</option>
@@ -1154,7 +1171,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
-            
+
             {modalProfessionalBalancesOpen && (
                 <div className="modal-overlay-vendas" onClick={closeProfessionalBalancesModal}>
                     <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>

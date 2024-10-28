@@ -199,32 +199,51 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 }
             }
 
-            // Processa os serviços
+            const higherCommissionServices = [
+                "Brow Lamination",
+                "Henna",
+                "Lash Lifting",
+                "Make",
+                "Sobrancelha Refctocil"
+            ];
+            
             const processedServices = selectedServices.map(service => {
                 const professional = professionals.find(prof => prof.id === service.selectedProfessional);
                 const professionalName = professional?.title;
-
+            
                 const valorVenda = service.price * service.quantity;
-                const custoTotal = (service.costPrice || 0) * service.quantity; // Define custoTotal com valor padrão 0
-
+                const custoTotal = (service.costPrice || 0) * service.quantity;
+            
                 let comissao = 0;
                 let valorLiquido = valorVenda - custoTotal;
-
+            
+                // Verifica a comissão específica para "Curso Automaquiagem 2h"
+                let commissionRate;
+                if (service.name === "Curso Automaquiagem 4h") {
+                    commissionRate = 0.30; // 30% para "Curso Automaquiagem 2h"
+                } else if (higherCommissionServices.includes(service.name)) {
+                    commissionRate = 0.35; // 35% para os serviços listados em higherCommissionServices
+                } else {
+                    commissionRate = 0.45; // 45% para os demais serviços
+                }
+            
                 if (professionalName !== 'teste') {
-                    comissao = 0.45 * valorLiquido;
+                    comissao = commissionRate * valorLiquido;
                     valorLiquido -= comissao;
                 }
-
+            
                 return {
                     ...service,
                     comissao,
                     valorLiquido,
                     originalSaleValue: valorVenda,
-                    costPrice: service.costPrice || 0, // Define costPrice como 0 caso esteja indefinido
+                    costPrice: service.costPrice || 0,
                     professionalId: service.selectedProfessional,
                     professionalName: professionalName || "Desconhecido",
                 };
             });
+            
+    
 
             // Processa os produtos
             const processedProducts = [];

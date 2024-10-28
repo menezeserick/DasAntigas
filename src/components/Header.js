@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import '../Styles/Header.css';
 
-const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, openRegisterBoxModal, openProductModal }) => {
+const Header = ({ 
+    openProfessionalModal, 
+    openServiceModal, 
+    openScheduleModal, 
+    openRegisterBoxModal, 
+    openProductModal, 
+    currentUserUID 
+}) => {
     const [menuOpen, setMenuOpen] = useState(false);
 
     const toggleMenu = () => {
@@ -31,7 +38,10 @@ const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, op
     const handleOpenProductModal = () => {
         setMenuOpen(false); 
         openProductModal(); 
-    }
+    };
+
+    // UID restrito
+    const restrictedUID = "8IBGORDnkaR6CFaxmyVVlGsNiC13";
 
     return (
         <header className="dashboard-header">
@@ -48,10 +58,15 @@ const Header = ({ openProfessionalModal, openServiceModal, openScheduleModal, op
 
             <div className={`header-actions ${menuOpen ? 'active' : ''}`}>
                 <button className="action-btn" onClick={handleOpenScheduleModal}>Agendar Cliente</button>
-                <button className="action-btn" onClick={handleOpenProfessionalModal}>Profissionais</button>
-                <button className="action-btn" onClick={handleOpenServiceModal}>Serviços</button>
-                <button className="action-btn" onClick={handleOpenProductModal}>Produtos</button>
-                <button className="action-btn" onClick={handleOpenRegisterBoxModal}>Caixa</button>
+                
+                {currentUserUID !== restrictedUID && (
+                    <>
+                        <button className="action-btn" onClick={handleOpenProfessionalModal}>Profissionais</button>
+                        <button className="action-btn" onClick={handleOpenServiceModal}>Serviços</button>
+                        <button className="action-btn" onClick={handleOpenProductModal}>Produtos</button>
+                        <button className="action-btn" onClick={handleOpenRegisterBoxModal}>Caixa</button>
+                    </>
+                )}
             </div>
         </header>
     );
