@@ -714,8 +714,9 @@ const Dashboard = () => {
                     const data = doc.data();
                     const start = moment.tz(`${data.date} ${data.time}`, "YYYY-MM-DD HH:mm", "America/Sao_Paulo").toDate();
                     const end = moment(start).add(30, 'minutes').toDate();
-
+    
                     return {
+                        id: doc.id, // Adicionando o ID do documento Firestore como `id`
                         title: `${data.clientName} - ${data.service}`,
                         start: start,
                         end: end,
@@ -727,9 +728,10 @@ const Dashboard = () => {
                 console.error("Erro ao buscar os dados: ", error);
             }
         };
-
+    
         fetchData();
     }, [professionals]);
+    
 
     const generateTimeOptions = () => {
         const options = [];

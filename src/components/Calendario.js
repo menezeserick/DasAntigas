@@ -5,7 +5,7 @@ import 'moment/locale/pt-br';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../Styles/Calendario.css';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, addDoc, query, where, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
 const localizer = momentLocalizer(moment);
 moment.tz.setDefault("America/Sao_Paulo");
@@ -65,13 +65,43 @@ const DailySalesSummary = ({ selectedDate }) => {
     );
 };
 
-const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComplete, onCancel, services }) => {
+const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComplete, onCancel, services, onEventDeleted }) => {
     const [selectedServices, setSelectedServices] = useState([]);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [products, setProducts] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [errorMessage, setErrorMessage] = useState('');
+
+    const handleRemoveEvent = async () => {
+        if (selectedEvent && selectedEvent.id) {
+            const confirmDelete = window.confirm("Tem certeza de que deseja remover este agendamento?");
+            if (confirmDelete) {
+                try {
+                    console.log("Deletando agendamento com ID:", selectedEvent.id);
+                    
+                    // Deleta o documento do Firestore
+                    await deleteDoc(doc(db, "schedules", selectedEvent.id));
+                    
+                    alert("Agendamento removido com sucesso.");
+                    
+                    // Chama a função de callback passada para atualizar a lista de eventos no componente pai
+                    onEventDeleted(selectedEvent.id); // Atualiza o estado no componente pai
+                    
+                    // Fecha o modal ou o diálogo
+                    onCancel(); 
+                } catch (error) {
+                    console.error("Erro ao remover agendamento:", error);
+                    
+                    // Mostra uma mensagem de erro se a exclusão falhar
+                    setErrorMessage("Não foi possível remover o agendamento. Tente novamente.");
+                }
+            }
+        }
+    };
+    
+    
+    
 
 
     useEffect(() => {
@@ -146,127 +176,137 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
     const handleAddCompletion = async (e) => {
         e.preventDefault();
-
+    
         const eventDate = moment(selectedEvent.start).format('YYYY-MM-DD');
         const today = moment().format('YYYY-MM-DD');
-
+    
         if (eventDate !== today) {
             setErrorMessage('As vendas só podem ser concluídas no mesmo dia do agendamento.');
             return;
         }
-
+    
         try {
             if (selectedServices.length === 0 && selectedProducts.length === 0) {
                 setErrorMessage('Pelo menos um serviço ou produto deve ser selecionado para completar a venda.');
                 return;
             }
-
+    
+            // Verifica o estoque dos produtos
             for (const product of selectedProducts) {
                 if (product.quantity > product.stock || product.stock === 0) {
                     setErrorMessage(`O produto "${product.name}" não possui estoque suficiente. Estoque disponível: ${product.stock}`);
                     return;
                 }
             }
+    
+            // Processa os serviços
             const processedServices = selectedServices.map(service => {
                 const professional = professionals.find(prof => prof.id === service.selectedProfessional);
                 const professionalName = professional?.title;
-
+            
                 const valorVenda = service.price * service.quantity;
-                const custoTotal = service.costPrice * service.quantity; // Calcula o custo total
-
+                const custoTotal = (service.costPrice || 0) * service.quantity; // Define custoTotal com valor padrão 0
+            
                 let comissao = 0;
                 let valorLiquido = valorVenda - custoTotal;
-
+            
                 if (professionalName !== 'teste') {
-                    comissao = 0.45 * valorLiquido; // Aplica comissão de 55%
+                    comissao = 0.45 * valorLiquido;
                     valorLiquido -= comissao;
                 }
-
+            
                 return {
                     ...service,
                     comissao,
                     valorLiquido,
                     originalSaleValue: valorVenda,
-                    costPrice: service.costPrice,
+                    costPrice: service.costPrice || 0, // Define costPrice como 0 caso esteja indefinido
                     professionalId: service.selectedProfessional,
-                    professionalName: professionalName,
+                    professionalName: professionalName || "Desconhecido",
                 };
             });
-
+    
+            // Processa os produtos
             const processedProducts = [];
             for (const product of selectedProducts) {
                 const professionalName = professionals.find(prof => prof.id === product.selectedProfessional)?.title;
-
-                let valorBase = (product.salePrice - product.costPrice) * product.quantity; // Subtraí o preço de custo do preço de venda
+    
+                let valorBase = (product.salePrice - product.costPrice) * product.quantity;
                 let comissao = 0;
                 let valorLiquido = valorBase;
-                const originalSaleValue = product.salePrice * product.quantity; // Valor total antes da subtração do custo
-
-                // Aplica a comissão somente se o profissional não for "teste"
+                const originalSaleValue = product.salePrice * product.quantity;
+    
                 if (professionalName !== 'teste') {
-                    comissao = 0.15 * valorBase; // Calcula a comissão sobre o valor base
-                    valorLiquido -= comissao; // Subtrai a comissão do valor base
+                    comissao = 0.15 * valorBase;
+                    valorLiquido -= comissao;
                 }
-
+    
                 const newStock = product.stock - product.quantity;
-
-                // Verifica o estoque
+    
                 if (newStock >= 0) {
                     await updateDoc(doc(db, "products", product.id), { stock: newStock });
                 } else {
                     setErrorMessage(`O produto "${product.name}" não possui estoque suficiente. Estoque disponível: ${product.stock}`);
                     return;
                 }
-
+    
                 processedProducts.push({
                     ...product,
-                    valorTotal: product.salePrice * product.quantity, // Valor total antes de subtrair o custo
+                    valorTotal: originalSaleValue,
                     comissao,
                     valorLiquido,
                     originalSaleValue,
                     professionalId: product.selectedProfessional,
-                    professionalName: professionalName
+                    professionalName: professionalName || "Desconhecido",
                 });
             }
-
+    
             const totalPrice = processedServices.reduce((total, service) => total + (service.price * service.quantity), 0)
                 + processedProducts.reduce((total, product) => total + (product.salePrice * product.quantity), 0);
-
+    
             const netTotal = processedServices.reduce((total, service) => total + service.valorLiquido, 0)
                 + processedProducts.reduce((total, product) => total + product.valorLiquido, 0);
-
-            const vendaDoc = await addDoc(collection(db, "vendas"), {
+    
+            // Monta os dados da venda e remove campos `undefined`
+            const vendaData = {
                 event: selectedEvent,
                 services: processedServices,
                 products: processedProducts,
                 paymentMethod: selectedPaymentMethod,
                 totalPrice,
                 netTotal,
-            });
-
+            };
+    
+            const filteredVendaData = Object.fromEntries(
+                Object.entries(vendaData).filter(([_, value]) => value !== undefined)
+            );
+    
+            const vendaDoc = await addDoc(collection(db, "vendas"), filteredVendaData);
+    
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
-
-            const today = new Date().toLocaleDateString('pt-BR', {
+    
+            // Atualiza o caixa
+            const todayDate = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
             }).split('/').reverse().join('-');
-
-            const q = query(collection(db, "boxes"), where("date", "==", today));
+    
+            const q = query(collection(db, "boxes"), where("date", "==", todayDate));
             const querySnapshot = await getDocs(q);
-
+    
             if (querySnapshot.empty) {
-                console.error(`Nenhum caixa foi encontrado para a data: ${today}`);
+                console.error(`Nenhum caixa foi encontrado para a data: ${todayDate}`);
                 return;
             }
-
+    
             const boxDoc = querySnapshot.docs[0];
             const boxData = boxDoc.data();
             const professionalsData = boxData.professionals || [];
-
+    
             const professionalBalances = {};
-
+    
             processedServices.forEach(service => {
                 const professionalId = service.professionalId;
                 if (!professionalBalances[professionalId]) {
@@ -278,7 +318,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 professionalBalances[professionalId].total += service.valorLiquido;
                 professionalBalances[professionalId].originalSaleValue += service.originalSaleValue;
             });
-
+    
             processedProducts.forEach(product => {
                 const professionalId = product.professionalId;
                 if (!professionalBalances[professionalId]) {
@@ -290,29 +330,30 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 professionalBalances[professionalId].total += product.valorLiquido;
                 professionalBalances[professionalId].originalSaleValue += product.valorTotal;
             });
-
+    
             for (const professionalId of Object.keys(professionalBalances)) {
                 const professionalIndex = professionalsData.findIndex(p => p.id === professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
-                    const newBalance = parseFloat(professional.balance) + professionalBalances[professionalId].total;
-
+                    const newBalance = parseFloat(professional.balance || 0) + professionalBalances[professionalId].total;
+    
                     professionalsData[professionalIndex].balance = newBalance;
                     professionalsData[professionalIndex].originalSaleValue = (professional.originalSaleValue || 0) + professionalBalances[professionalId].originalSaleValue;
-
+    
                     await updateDoc(boxDoc.ref, { professionals: professionalsData });
-
+    
                     console.log(`Saldo atualizado para o profissional ID: ${professionalId}, Novo saldo: ${newBalance}`);
                 } else {
                     console.error(`Profissional com ID ${professionalId} não encontrado no array de profissionais.`);
                 }
             }
-
+    
             onComplete();
         } catch (error) {
             console.error("Erro ao adicionar venda: ", error);
         }
     };
+    
 
 
     const handleRemoveService = (serviceId) => {
@@ -393,7 +434,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
         handleAddCompletion(e);
     };
 
-    
+
 
     return (
         <div className={`modal-overlay modal-overlay-open`}>
@@ -490,8 +531,8 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     </ul>
 
                     <p className="total-price">Total: R$ {totalPrice.toFixed(2)}</p>
-
                     <button type="submit">Finalizar Atendimento</button>
+                    {selectedEvent && (<button type="button" className="fecharbotao" onClick={handleRemoveEvent}> Remover Agendamento </button>)}
                     <button type="button" className="fecharbotao" onClick={onCancel}>Fechar</button>
                 </form>
             </div>
@@ -511,6 +552,16 @@ const Calendario = ({ events, professionals = [] }) => {
     const [isCompleting, setIsCompleting] = useState(false);
     const [paymentMethods, setPaymentMethods] = useState([]);
     const [services, setServices] = useState([]);
+    const [currentEvents, setCurrentEvents] = useState(events); // Estado inicial
+
+    useEffect(() => {
+        // Atualiza currentEvents sempre que events mudar
+        setCurrentEvents(events);
+    }, [events]);
+
+    const handleEventDeleted = (deletedEventId) => {
+        setCurrentEvents(prevEvents => prevEvents.filter(event => event.id !== deletedEventId));
+    };
 
     useEffect(() => {
         const fetchPaymentMethods = async () => {
@@ -574,7 +625,7 @@ const Calendario = ({ events, professionals = [] }) => {
             <div className="monthly-calendar">
                 <Calendar
                     localizer={localizer}
-                    events={events}
+                    events={currentEvents}
                     startAccessor="start"
                     endAccessor="end"
                     style={{ height: 400, marginBottom: '20px', marginLeft: '10px' }}
@@ -608,7 +659,7 @@ const Calendario = ({ events, professionals = [] }) => {
             <div className="daily-calendar">
                 <Calendar
                     localizer={localizer}
-                    events={events}
+                    events={currentEvents}
                     startAccessor="start"
                     endAccessor="end"
                     style={{ height: 500 }}
@@ -641,6 +692,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     onComplete={handleComplete}
                     onCancel={handleCancel}
                     services={services}
+                    onEventDeleted={handleEventDeleted}
                 />
             )}
 
@@ -650,7 +702,7 @@ const Calendario = ({ events, professionals = [] }) => {
                 <div className="monthly-calendar">
                     <Calendar
                         localizer={localizer}
-                        events={events}
+                        events={currentEvents}
                         startAccessor="start"
                         endAccessor="end"
                         style={{ height: 400, marginBottom: '20px', marginLeft: '10px' }}
@@ -681,7 +733,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     <div className="daily-calendar">
                         <Calendar
                             localizer={localizer}
-                            events={events}
+                            events={currentEvents}
                             startAccessor="start"
                             endAccessor="end"
                             style={{ height: 500 }}
@@ -714,6 +766,7 @@ const Calendario = ({ events, professionals = [] }) => {
                             onComplete={handleComplete}
                             onCancel={handleCancel}
                             services={services}
+                            onEventDeleted={handleEventDeleted}
                         />
                     )}
                     <DailySalesSummary selectedDate={selectedDate} />
