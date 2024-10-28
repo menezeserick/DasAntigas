@@ -201,10 +201,10 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
             const higherCommissionServices = [
                 "Brow Lamination",
-                "Henna",
+                "Sobrancelha com Henna",
                 "Lash Lifting",
                 "Make",
-                "Sobrancelha Refctocil"
+                "Sobrancelha com Refctocil"
             ];
             
             const processedServices = selectedServices.map(service => {
@@ -219,7 +219,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             
                 // Verifica a comissão específica para "Curso Automaquiagem 2h"
                 let commissionRate;
-                if (service.name === "Curso Automaquiagem 4h") {
+                if (service.name === "Curso Automaquiagem 4h" && "Microblading 1 Sessão") {
                     commissionRate = 0.30; // 30% para "Curso Automaquiagem 2h"
                 } else if (higherCommissionServices.includes(service.name)) {
                     commissionRate = 0.35; // 35% para os serviços listados em higherCommissionServices
