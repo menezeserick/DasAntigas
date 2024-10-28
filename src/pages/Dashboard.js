@@ -714,7 +714,7 @@ const Dashboard = () => {
                     const data = doc.data();
                     const start = moment.tz(`${data.date} ${data.time}`, "YYYY-MM-DD HH:mm", "America/Sao_Paulo").toDate();
                     const end = moment(start).add(30, 'minutes').toDate();
-    
+
                     return {
                         id: doc.id, // Adicionando o ID do documento Firestore como `id`
                         title: `${data.clientName} - ${data.service}`,
@@ -728,10 +728,10 @@ const Dashboard = () => {
                 console.error("Erro ao buscar os dados: ", error);
             }
         };
-    
+
         fetchData();
     }, [professionals]);
-    
+
 
     const generateTimeOptions = () => {
         const options = [];
@@ -745,7 +745,7 @@ const Dashboard = () => {
         }
         return options;
     };
-    
+
 
     return (
         <div className="container">
@@ -1132,7 +1132,7 @@ const Dashboard = () => {
 
             {modalMonthlyBalancesOpen && (
                 <div className="modal-overlay-vendas" onClick={closeMonthlyBalancesModal}>
-                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-vendas modal-vendas-saldos" onClick={(e) => e.stopPropagation()}>
                         <h2>Saldos Mensal</h2>
                         <table>
                             <thead>
@@ -1154,6 +1154,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
+            
             {modalProfessionalBalancesOpen && (
                 <div className="modal-overlay-vendas" onClick={closeProfessionalBalancesModal}>
                     <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>

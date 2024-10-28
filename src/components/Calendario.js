@@ -79,29 +79,29 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             if (confirmDelete) {
                 try {
                     console.log("Deletando agendamento com ID:", selectedEvent.id);
-                    
+
                     // Deleta o documento do Firestore
                     await deleteDoc(doc(db, "schedules", selectedEvent.id));
-                    
+
                     alert("Agendamento removido com sucesso.");
-                    
+
                     // Chama a função de callback passada para atualizar a lista de eventos no componente pai
                     onEventDeleted(selectedEvent.id); // Atualiza o estado no componente pai
-                    
+
                     // Fecha o modal ou o diálogo
-                    onCancel(); 
+                    onCancel();
                 } catch (error) {
                     console.error("Erro ao remover agendamento:", error);
-                    
+
                     // Mostra uma mensagem de erro se a exclusão falhar
                     setErrorMessage("Não foi possível remover o agendamento. Tente novamente.");
                 }
             }
         }
     };
-    
-    
-    
+
+
+
 
 
     useEffect(() => {
@@ -176,21 +176,21 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
     const handleAddCompletion = async (e) => {
         e.preventDefault();
-    
+
         const eventDate = moment(selectedEvent.start).format('YYYY-MM-DD');
         const today = moment().format('YYYY-MM-DD');
-    
+
         if (eventDate !== today) {
             setErrorMessage('As vendas só podem ser concluídas no mesmo dia do agendamento.');
             return;
         }
-    
+
         try {
             if (selectedServices.length === 0 && selectedProducts.length === 0) {
                 setErrorMessage('Pelo menos um serviço ou produto deve ser selecionado para completar a venda.');
                 return;
             }
-    
+
             // Verifica o estoque dos produtos
             for (const product of selectedProducts) {
                 if (product.quantity > product.stock || product.stock === 0) {
@@ -198,23 +198,23 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     return;
                 }
             }
-    
+
             // Processa os serviços
             const processedServices = selectedServices.map(service => {
                 const professional = professionals.find(prof => prof.id === service.selectedProfessional);
                 const professionalName = professional?.title;
-            
+
                 const valorVenda = service.price * service.quantity;
                 const custoTotal = (service.costPrice || 0) * service.quantity; // Define custoTotal com valor padrão 0
-            
+
                 let comissao = 0;
                 let valorLiquido = valorVenda - custoTotal;
-            
+
                 if (professionalName !== 'teste') {
                     comissao = 0.45 * valorLiquido;
                     valorLiquido -= comissao;
                 }
-            
+
                 return {
                     ...service,
                     comissao,
@@ -225,31 +225,31 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     professionalName: professionalName || "Desconhecido",
                 };
             });
-    
+
             // Processa os produtos
             const processedProducts = [];
             for (const product of selectedProducts) {
                 const professionalName = professionals.find(prof => prof.id === product.selectedProfessional)?.title;
-    
+
                 let valorBase = (product.salePrice - product.costPrice) * product.quantity;
                 let comissao = 0;
                 let valorLiquido = valorBase;
                 const originalSaleValue = product.salePrice * product.quantity;
-    
+
                 if (professionalName !== 'teste') {
                     comissao = 0.15 * valorBase;
                     valorLiquido -= comissao;
                 }
-    
+
                 const newStock = product.stock - product.quantity;
-    
+
                 if (newStock >= 0) {
                     await updateDoc(doc(db, "products", product.id), { stock: newStock });
                 } else {
                     setErrorMessage(`O produto "${product.name}" não possui estoque suficiente. Estoque disponível: ${product.stock}`);
                     return;
                 }
-    
+
                 processedProducts.push({
                     ...product,
                     valorTotal: originalSaleValue,
@@ -260,13 +260,13 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     professionalName: professionalName || "Desconhecido",
                 });
             }
-    
+
             const totalPrice = processedServices.reduce((total, service) => total + (service.price * service.quantity), 0)
                 + processedProducts.reduce((total, product) => total + (product.salePrice * product.quantity), 0);
-    
+
             const netTotal = processedServices.reduce((total, service) => total + service.valorLiquido, 0)
                 + processedProducts.reduce((total, product) => total + product.valorLiquido, 0);
-    
+
             // Monta os dados da venda e remove campos `undefined`
             const vendaData = {
                 event: selectedEvent,
@@ -276,15 +276,15 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 totalPrice,
                 netTotal,
             };
-    
+
             const filteredVendaData = Object.fromEntries(
                 Object.entries(vendaData).filter(([_, value]) => value !== undefined)
             );
-    
+
             const vendaDoc = await addDoc(collection(db, "vendas"), filteredVendaData);
-    
+
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
-    
+
             // Atualiza o caixa
             const todayDate = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
@@ -292,21 +292,21 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 month: '2-digit',
                 day: '2-digit',
             }).split('/').reverse().join('-');
-    
+
             const q = query(collection(db, "boxes"), where("date", "==", todayDate));
             const querySnapshot = await getDocs(q);
-    
+
             if (querySnapshot.empty) {
                 console.error(`Nenhum caixa foi encontrado para a data: ${todayDate}`);
                 return;
             }
-    
+
             const boxDoc = querySnapshot.docs[0];
             const boxData = boxDoc.data();
             const professionalsData = boxData.professionals || [];
-    
+
             const professionalBalances = {};
-    
+
             processedServices.forEach(service => {
                 const professionalId = service.professionalId;
                 if (!professionalBalances[professionalId]) {
@@ -318,7 +318,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 professionalBalances[professionalId].total += service.valorLiquido;
                 professionalBalances[professionalId].originalSaleValue += service.originalSaleValue;
             });
-    
+
             processedProducts.forEach(product => {
                 const professionalId = product.professionalId;
                 if (!professionalBalances[professionalId]) {
@@ -330,30 +330,30 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 professionalBalances[professionalId].total += product.valorLiquido;
                 professionalBalances[professionalId].originalSaleValue += product.valorTotal;
             });
-    
+
             for (const professionalId of Object.keys(professionalBalances)) {
                 const professionalIndex = professionalsData.findIndex(p => p.id === professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
                     const newBalance = parseFloat(professional.balance || 0) + professionalBalances[professionalId].total;
-    
+
                     professionalsData[professionalIndex].balance = newBalance;
                     professionalsData[professionalIndex].originalSaleValue = (professional.originalSaleValue || 0) + professionalBalances[professionalId].originalSaleValue;
-    
+
                     await updateDoc(boxDoc.ref, { professionals: professionalsData });
-    
+
                     console.log(`Saldo atualizado para o profissional ID: ${professionalId}, Novo saldo: ${newBalance}`);
                 } else {
                     console.error(`Profissional com ID ${professionalId} não encontrado no array de profissionais.`);
                 }
             }
-    
+
             onComplete();
         } catch (error) {
             console.error("Erro ao adicionar venda: ", error);
         }
     };
-    
+
 
 
     const handleRemoveService = (serviceId) => {
@@ -531,7 +531,19 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     </ul>
 
                     <p className="total-price">Total: R$ {totalPrice.toFixed(2)}</p>
-                    <button type="submit">Finalizar Atendimento</button>
+                    <button
+                        type="submit"
+                        style={{
+                            padding: '12px 20px',   // Aumenta o padding
+                            fontSize: '16px',       // Aumenta o tamanho da fonte
+                            borderRadius: '5px',    // Raio da borda para um visual mais arredondado
+                            cursor: 'pointer',       // Muda o cursor para indicar que é clicável
+                            color: 'white',         // Cor do texto
+                            border: 'none',         // Remove a borda padrão
+                        }}
+                    >
+                        Finalizar Atendimento
+                    </button>
                     {selectedEvent && (<button type="button" className="fecharbotao" onClick={handleRemoveEvent}> Remover Agendamento </button>)}
                     <button type="button" className="fecharbotao" onClick={onCancel}>Fechar</button>
                 </form>
