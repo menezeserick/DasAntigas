@@ -41,7 +41,7 @@ const Header = ({
     };
 
     // UID restrito
-    const restrictedUID = "8IBGORDnkaR6CFaxmyVVlGsNiC13";
+    const restrictedUID = "2kb4R8vZo6QiQ3kyeQzXz4LaCKy1";
 
     return (
         <header className="dashboard-header">

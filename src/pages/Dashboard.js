@@ -600,7 +600,7 @@ const Dashboard = () => {
                 const end = moment(start).add(30, 'minutes').toDate();
 
                 return {
-                    title: `${formData.clientName} - ${formData.title}`,
+                    title: `${formData.clientName}  ${formData.title}`,
                     start: start,
                     end: end,
                     resourceId: professional.id,
