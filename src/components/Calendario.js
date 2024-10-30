@@ -206,17 +206,17 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 "Make",
                 "Sobrancelha com Refctocil"
             ];
-            
+
             const processedServices = selectedServices.map(service => {
                 const professional = professionals.find(prof => prof.id === service.selectedProfessional);
                 const professionalName = professional?.title;
-            
+
                 const valorVenda = service.price * service.quantity;
                 const custoTotal = (service.costPrice || 0) * service.quantity;
-            
+
                 let comissao = 0;
                 let valorLiquido = valorVenda - custoTotal;
-            
+
                 // Verifica a comissão específica para "Curso Automaquiagem 2h"
                 let commissionRate;
                 if (service.name === "Curso Automaquiagem 4h" && "Microblading 1 Sessão") {
@@ -226,12 +226,12 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 } else {
                     commissionRate = 0.45; // 45% para os demais serviços
                 }
-            
+
                 if (professionalName !== 'teste') {
                     comissao = commissionRate * valorLiquido;
                     valorLiquido -= comissao;
                 }
-            
+
                 return {
                     ...service,
                     comissao,
@@ -242,8 +242,8 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     professionalName: professionalName || "Desconhecido",
                 };
             });
-            
-    
+
+
 
             // Processa os produtos
             const processedProducts = [];
@@ -473,11 +473,13 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     <label>Serviços:</label>
                     <select onChange={(e) => handleServiceChange(e.target.value)}>
                         <option value="">Selecione um serviço</option>
-                        {services.map(service => (
-                            <option key={service.id} value={service.id}>
-                                {service.name} - R$ {(service.price && service.price.toFixed(2)) || 'Preço não definido'}
-                            </option>
-                        ))}
+                        {services
+                            .sort((a, b) => a.name.localeCompare(b.name)) // Ordena os serviços pelo nome
+                            .map(service => (
+                                <option key={service.id} value={service.id}>
+                                    {service.name} - R$ {(service.price && service.price.toFixed(2)) || 'Preço não definido'}
+                                </option>
+                            ))}
                     </select>
 
                     <ul className="selected-services-list">

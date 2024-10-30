@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Calendario from '../components/Calendario';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
@@ -46,6 +46,8 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(false);
     const [filteredSalesData, setFilteredSalesData] = useState([]);
     const [currentUserUID, setCurrentUserUID] = useState(null);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -96,6 +98,94 @@ const Dashboard = () => {
         // Limpar o listener ao desmontar o componente
         return () => unsubscribe();
     }, []);
+
+    const NotificationPopup = ({ message, type, onClose }) => {
+        useEffect(() => {
+            const timer = setTimeout(onClose, 5000); // Fecha após 5 segundos
+            return () => clearTimeout(timer); // Limpa o temporizador ao desmontar
+        }, [onClose]);
+
+        return (
+            <div className={`notification-popup ${type}`}>
+                {message}
+            </div>
+        );
+    };
+
+
+    const handleReverseSale = async (saleId) => {
+        try {
+            const saleDoc = await getDoc(doc(db, "vendas", saleId));
+            if (!saleDoc.exists()) {
+                setErrorMessage("Venda não encontrada.");
+                return;
+            }
+
+            const saleData = saleDoc.data();
+
+            // Reverter o estoque dos produtos e atualizar o saldo dos profissionais
+            for (const product of saleData.products) {
+                const productRef = doc(db, "products", product.id);
+                const productDoc = await getDoc(productRef);
+                const currentStock = productDoc.data().stock;
+                const newStock = currentStock + product.quantity;
+
+                await updateDoc(productRef, { stock: newStock });
+            }
+
+            // Reverte os saldos dos profissionais no caixa
+            const todayDate = new Date().toLocaleDateString('pt-BR', {
+                timeZone: 'America/Sao_Paulo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            }).split('/').reverse().join('-');
+
+            const q = query(collection(db, "boxes"), where("date", "==", todayDate));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                console.error(`Nenhum caixa encontrado para a data: ${todayDate}`);
+                return;
+            }
+
+            const boxDoc = querySnapshot.docs[0];
+            const boxData = boxDoc.data();
+            const professionalsData = boxData.professionals || [];
+
+            saleData.services.forEach(service => {
+                const professionalIndex = professionalsData.findIndex(p => p.id === service.professionalId);
+                if (professionalIndex !== -1) {
+                    const professional = professionalsData[professionalIndex];
+                    professional.balance -= service.valorLiquido;
+                    professional.originalSaleValue -= service.originalSaleValue;
+                }
+            });
+
+            saleData.products.forEach(product => {
+                const professionalIndex = professionalsData.findIndex(p => p.id === product.professionalId);
+                if (professionalIndex !== -1) {
+                    const professional = professionalsData[professionalIndex];
+                    professional.balance -= product.valorLiquido;
+                    professional.originalSaleValue -= product.originalSaleValue;
+                }
+            });
+
+            await updateDoc(boxDoc.ref, { professionals: professionalsData });
+            await deleteDoc(doc(db, "vendas", saleId));
+
+            // Define a mensagem de sucesso
+            setSuccessMessage("Venda revertida com sucesso.");
+            setErrorMessage("");
+
+            // Limpa a mensagem após 5 segundos
+            setTimeout(() => setSuccessMessage(""), 5000);
+
+        } catch (error) {
+            console.error("Erro ao reverter venda: ", error);
+            setErrorMessage("Erro ao reverter a venda.");
+        }
+    };
 
 
 
@@ -771,7 +861,7 @@ const Dashboard = () => {
                 openServiceModal={openServiceModal}
                 openRegisterBoxModal={openRegisterBoxModal}
                 openProductModal={openProductModal}
-                currentUserUID={currentUserUID} 
+                currentUserUID={currentUserUID}
             />
 
 
@@ -781,6 +871,21 @@ const Dashboard = () => {
                 professionals={professionals}
                 paymentMethods={paymentMethods}
             />
+
+            {successMessage && (
+                <NotificationPopup
+                    message={successMessage}
+                    type="success"
+                    onClose={() => setSuccessMessage("")}
+                />
+            )}
+            {errorMessage && (
+                <NotificationPopup
+                    message={errorMessage}
+                    type="error"
+                    onClose={() => setErrorMessage("")}
+                />
+            )}
 
             {modalIsOpen && (
                 <div className="modal-overlay modal-overlay-open" onClick={closeModal}>
@@ -792,9 +897,12 @@ const Dashboard = () => {
                             <label>Serviço:</label>
                             <select name="title" onChange={handleFormInputChange}>
                                 <option value="">Selecione um serviço</option>
-                                {services.map((service, index) => (
-                                    <option key={index} value={service.name}>{service.name}</option>
-                                ))}
+                                {services
+                                    .slice() // Cria uma cópia do array para evitar modificar o original
+                                    .sort((a, b) => a.name.localeCompare(b.name)) // Ordena os serviços pelo nome
+                                    .map((service, index) => (
+                                        <option key={index} value={service.name}>{service.name}</option>
+                                    ))}
                             </select>
                             <label>Profissional:</label>
                             <select name="professional" onChange={handleFormInputChange} required>
@@ -883,17 +991,20 @@ const Dashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {serviceData.map((services) => (
-                                        <tr key={services.id}>
-                                            <td>{services.name}</td>
-                                            <td>{Number.isFinite(services.price) ? `R$ ${services.price.toFixed(2)}` : 'N/A'}</td>
-                                            <td>{Number.isFinite(services.costPrice) ? `R$ ${services.costPrice.toFixed(2)}` : 'N/A'}</td> {/* Exibe o preço de custo */}
-                                            <td>
-                                                <FaEdit onClick={() => handleEditService(services)} style={{ cursor: 'pointer', marginRight: '10px' }} />
-                                                <FaTrash onClick={() => handleDeleteService(services.id)} style={{ cursor: 'pointer', color: 'red' }} />
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {serviceData
+                                        .slice() // Cria uma cópia para evitar mutação do array original
+                                        .sort((a, b) => a.name.localeCompare(b.name)) // Ordena os serviços pelo nome
+                                        .map((services) => (
+                                            <tr key={services.id}>
+                                                <td>{services.name}</td>
+                                                <td>{Number.isFinite(services.price) ? `R$ ${services.price.toFixed(2)}` : 'N/A'}</td>
+                                                <td>{Number.isFinite(services.costPrice) ? `R$ ${services.costPrice.toFixed(2)}` : 'N/A'}</td> {/* Exibe o preço de custo */}
+                                                <td>
+                                                    <FaEdit onClick={() => handleEditService(services)} style={{ cursor: 'pointer', marginRight: '10px' }} />
+                                                    <FaTrash onClick={() => handleDeleteService(services.id)} style={{ cursor: 'pointer', color: 'red' }} />
+                                                </td>
+                                            </tr>
+                                        ))}
                                 </tbody>
                             </table>
                         ) : (
@@ -903,6 +1014,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
+
 
             {isEditServiceModalOpen && (
                 <div className="modal-overlay modal-overlay-open" onClick={(e) => {
@@ -1214,15 +1326,14 @@ const Dashboard = () => {
             )}
             {modalSalesDetailsOpen && (
                 <div className="modal-overlay-vendas" onClick={closeSalesDetailsModal}>
-                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <h2 style={{ margin: '0', paddingRight: '20px' }}>Vendas</h2>
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                                <button onClick={() => filterSalesByPeriod('day')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Vendas do Dia</button>
-                                <button onClick={() => filterSalesByPeriod('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Vendas da Semana</button>
-                                <button onClick={() => filterSalesByPeriod('month')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Vendas do Mês</button>
-                            </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }} className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                        <h2 style={{margin: '0', paddingBottom: '20px' }}>Vendas</h2>
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px'}}>
+                            <button onClick={() => filterSalesByPeriod('day')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF', marginRight: '10px' }}>Vendas do Dia</button>
+                            <button onClick={() => filterSalesByPeriod('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF', marginRight: '10px' }}>Vendas da Semana</button>
+                            <button onClick={() => filterSalesByPeriod('month')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Vendas do Mês</button>
                         </div>
+
                         <table>
                             <thead>
                                 <tr>
@@ -1232,6 +1343,7 @@ const Dashboard = () => {
                                     <th>Valor Total</th>
                                     <th>Valor com Comissão</th>
                                     <th>Método de Pagamento</th>
+                                    <th>Ações</th> {/* Nova coluna para ações */}
                                 </tr>
                             </thead>
                             <tbody>
@@ -1259,14 +1371,16 @@ const Dashboard = () => {
                                         <td>R$ {sale.totalPrice.toFixed(2)}</td>
                                         <td>R$ {sale.netTotal.toFixed(2)}</td>
                                         <td>{sale.paymentMethod}</td>
+                                        <td>
+                                            <button onClick={() => handleReverseSale(sale.id)} style={{ backgroundColor: '#D32F2F', color: '#FFFFFF' }}>Reverter Venda</button>
+                                        </td>
                                     </tr>
                                 )) : (
                                     <tr>
-                                        <td colSpan="6">Nenhuma venda encontrada para o período selecionado.</td>
+                                        <td colSpan="7">Nenhuma venda encontrada para o período selecionado.</td>
                                     </tr>
                                 )}
                             </tbody>
-
                         </table>
                         <button onClick={closeSalesDetailsModal}>Fechar</button>
                     </div>
