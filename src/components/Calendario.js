@@ -219,7 +219,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
                 // Verifica a comissão específica para "Curso Automaquiagem 2h"
                 let commissionRate;
-                if (service.name === "Curso Automaquiagem 4h" && "Microblading 1 Sessão") {
+                if (service.name === "Curso Automaquiagem 4h" || service.name === "Microblading 1 Sessão") {
                     commissionRate = 0.30; // 30% para "Curso Automaquiagem 2h"
                 } else if (higherCommissionServices.includes(service.name)) {
                     commissionRate = 0.35; // 35% para os serviços listados em higherCommissionServices
@@ -702,7 +702,7 @@ const Calendario = ({ events, professionals = [] }) => {
                     defaultView="day"
                     date={selectedDate}
                     min={new Date(1970, 1, 1, 8, 0, 0)}
-                    max={new Date(1970, 1, 1, 21, 0, 0)}
+                    max={new Date(1970, 1, 1, 21, 30, 0)}
                     resources={professionals}
                     resourceAccessor="resourceId"
                     resourceIdAccessor="id"
