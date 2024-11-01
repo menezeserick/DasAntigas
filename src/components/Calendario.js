@@ -101,9 +101,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
     };
 
 
-
-
-
     useEffect(() => {
         if (paymentMethods.length > 0) {
             setSelectedPaymentMethod(paymentMethods[0].name);
@@ -251,7 +248,7 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 const originalSaleValue = product.salePrice * product.quantity;
 
                 if (professionalName !== 'teste') {
-                    comissao = 0.15 * valorBase;
+                    comissao = 0.85 * valorBase;
                     valorLiquido -= comissao;
                 }
 
