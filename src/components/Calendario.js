@@ -213,18 +213,16 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
                 const valorVenda = service.price * service.quantity;
                 const custoTotal = (service.costPrice || 0) * service.quantity;
-
                 let comissao = 0;
                 let valorLiquido = valorVenda - custoTotal;
 
-                // Verifica a comissão específica para "Curso Automaquiagem 2h"
                 let commissionRate;
                 if (service.name === "Curso Automaquiagem 4h" || service.name === "Microblading 1 Sessão") {
-                    commissionRate = 0.30; // 30% para "Curso Automaquiagem 2h"
+                    commissionRate = 0.30;
                 } else if (higherCommissionServices.includes(service.name)) {
-                    commissionRate = 0.35; // 35% para os serviços listados em higherCommissionServices
+                    commissionRate = 0.35;
                 } else {
-                    commissionRate = 0.45; // 45% para os demais serviços
+                    commissionRate = 0.45;
                 }
 
                 if (professionalName !== 'teste') {
@@ -243,9 +241,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                 };
             });
 
-
-
-            // Processa os produtos
             const processedProducts = [];
             for (const product of selectedProducts) {
                 const professionalName = professionals.find(prof => prof.id === product.selectedProfessional)?.title;
@@ -286,7 +281,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             const netTotal = processedServices.reduce((total, service) => total + service.valorLiquido, 0)
                 + processedProducts.reduce((total, product) => total + product.valorLiquido, 0);
 
-            // Monta os dados da venda e remove campos `undefined`
             const vendaData = {
                 event: selectedEvent,
                 services: processedServices,
@@ -304,7 +298,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
             console.log("Venda adicionada com sucesso: ", vendaDoc.id);
 
-            // Atualiza o caixa
             const todayDate = new Date().toLocaleDateString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric',
@@ -326,28 +319,45 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
             const professionalBalances = {};
 
+            // Processamento de saldo com lógica de desvio de comissão para o ID de "Lucas"
+            const lucasId = "MI4K0IIjF0hcPuv5w3Gz";
+
             processedServices.forEach(service => {
-                const professionalId = service.professionalId;
-                if (!professionalBalances[professionalId]) {
-                    professionalBalances[professionalId] = {
-                        total: 0,
-                        originalSaleValue: 0,
-                    };
+                const targetProfessionalId = selectedPaymentMethod === "Máquina do Colaborador" ? lucasId : service.professionalId;
+
+                // Incrementa o valor sem comissão para exibição no sistema
+                if (!professionalBalances[service.professionalId]) {
+                    professionalBalances[service.professionalId] = { total: 0, originalSaleValue: 0 };
                 }
-                professionalBalances[professionalId].total += service.valorLiquido;
-                professionalBalances[professionalId].originalSaleValue += service.originalSaleValue;
+                professionalBalances[service.professionalId].originalSaleValue += service.originalSaleValue;
+
+                // Adiciona a comissão para "Lucas" se o método de pagamento for "Máquina do Colaborador"
+                if (selectedPaymentMethod === "Máquina do Colaborador") {
+                    if (!professionalBalances[lucasId]) {
+                        professionalBalances[lucasId] = { total: 0, originalSaleValue: 0 };
+                    }
+                    professionalBalances[lucasId].total += service.comissao;
+                } else {
+                    professionalBalances[targetProfessionalId].total += service.valorLiquido;
+                }
             });
 
             processedProducts.forEach(product => {
-                const professionalId = product.professionalId;
-                if (!professionalBalances[professionalId]) {
-                    professionalBalances[professionalId] = {
-                        total: 0,
-                        originalSaleValue: 0,
-                    };
+                const targetProfessionalId = selectedPaymentMethod === "Máquina do Colaborador" ? lucasId : product.professionalId;
+
+                if (!professionalBalances[product.professionalId]) {
+                    professionalBalances[product.professionalId] = { total: 0, originalSaleValue: 0 };
                 }
-                professionalBalances[professionalId].total += product.valorLiquido;
-                professionalBalances[professionalId].originalSaleValue += product.valorTotal;
+                professionalBalances[product.professionalId].originalSaleValue += product.originalSaleValue;
+
+                if (selectedPaymentMethod === "Máquina do Colaborador") {
+                    if (!professionalBalances[lucasId]) {
+                        professionalBalances[lucasId] = { total: 0, originalSaleValue: 0 };
+                    }
+                    professionalBalances[lucasId].total += product.comissao;
+                } else {
+                    professionalBalances[targetProfessionalId].total += product.valorLiquido;
+                }
             });
 
             for (const professionalId of Object.keys(professionalBalances)) {
@@ -372,7 +382,6 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
             console.error("Erro ao adicionar venda: ", error);
         }
     };
-
 
 
     const handleRemoveService = (serviceId) => {
@@ -465,10 +474,13 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
                     <label>Método de Pagamento:</label>
                     <select onChange={(e) => setSelectedPaymentMethod(e.target.value)} value={selectedPaymentMethod} required>
                         <option value="">Selecione um método</option>
-                        {paymentMethods.map(method => (
-                            <option key={method.id} value={method.name}>{method.name}</option>
-                        ))}
+                        {paymentMethods
+                            .sort((a, b) => a.name.localeCompare(b.name)) // Ordena em ordem alfabética
+                            .map(method => (
+                                <option key={method.id} value={method.name}>{method.name}</option>
+                            ))}
                     </select>
+
 
                     <label>Serviços:</label>
                     <select onChange={(e) => handleServiceChange(e.target.value)}>

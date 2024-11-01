@@ -48,6 +48,7 @@ const Dashboard = () => {
     const [currentUserUID, setCurrentUserUID] = useState(null);
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const [detailedTotals, setDetailedTotals] = useState(null);
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -85,6 +86,20 @@ const Dashboard = () => {
     const closeProfessionalBalancesModal = () => setModalProfessionalBalancesOpen(false);
     const closeMonthlyBalancesModal = () => setModalMonthlyBalancesOpen(false);
     const closeOpenBoxesModal = () => setModalOpenBoxesOpen(false);
+
+    const calculateDetailedTotals = () => {
+        const totals = {};
+
+        filteredSalesData.forEach(sale => {
+            const { paymentMethod, totalPrice } = sale;
+            if (!totals[paymentMethod]) {
+                totals[paymentMethod] = 0;
+            }
+            totals[paymentMethod] += totalPrice;
+        });
+
+        setDetailedTotals(totals);
+    };
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(user => {
@@ -1326,63 +1341,84 @@ const Dashboard = () => {
             )}
             {modalSalesDetailsOpen && (
                 <div className="modal-overlay-vendas" onClick={closeSalesDetailsModal}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }} className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <h2 style={{margin: '0', paddingBottom: '20px' }}>Vendas</h2>
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px'}}>
-                            <button onClick={() => filterSalesByPeriod('day')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF', marginRight: '10px' }}>Vendas do Dia</button>
-                            <button onClick={() => filterSalesByPeriod('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF', marginRight: '10px' }}>Vendas da Semana</button>
-                            <button onClick={() => filterSalesByPeriod('month')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Vendas do Mês</button>
+                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
+                        <h2 style={{ margin: '0', paddingBottom: '20px' }}>Vendas</h2>
+                        <div className="sales-filter-buttons" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                            <button onClick={() => filterSalesByPeriod('day')} className="filter-button">Vendas do Dia</button>
+                            <button onClick={() => filterSalesByPeriod('week')} className="filter-button">Vendas da Semana</button>
+                            <button onClick={() => filterSalesByPeriod('month')} className="filter-button">Vendas do Mês</button>
                         </div>
 
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Cliente</th>
-                                    <th>Serviços</th>
-                                    <th>Produtos</th>
-                                    <th>Valor Total</th>
-                                    <th>Valor com Comissão</th>
-                                    <th>Método de Pagamento</th>
-                                    <th>Ações</th> {/* Nova coluna para ações */}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredSalesData.length > 0 ? filteredSalesData.map((sale) => (
-                                    <tr key={sale.id}>
-                                        <td>{sale.event.title || "Cliente Desconhecido"}</td>
-                                        <td>
-                                            {sale.services?.map(service => (
-                                                <div key={service.id}>
-                                                    {service.name} - Quantidade: {service.quantity} - Valor: R$ {service.price.toFixed(2)}
-                                                    <br />
-                                                    Profissional: {service.professionalName} - Valor Recebido: R$ {service.valorLiquido.toFixed(2)}
-                                                </div>
-                                            ))}
-                                        </td>
-                                        <td>
-                                            {sale.products?.map(product => (
-                                                <div key={product.id}>
-                                                    {product.name} - Quantidade: {product.quantity} - Valor: R$ {product.salePrice.toFixed(2)}
-                                                    <br />
-                                                    Profissional: {product.professionalName} - Valor Recebido: R$ {product.valorLiquido.toFixed(2)}
-                                                </div>
-                                            ))}
-                                        </td>
-                                        <td>R$ {sale.totalPrice.toFixed(2)}</td>
-                                        <td>R$ {sale.netTotal.toFixed(2)}</td>
-                                        <td>{sale.paymentMethod}</td>
-                                        <td>
-                                            <button onClick={() => handleReverseSale(sale.id)} style={{ backgroundColor: '#D32F2F', color: '#FFFFFF' }}>Reverter Venda</button>
-                                        </td>
-                                    </tr>
-                                )) : (
+                        <div className="sales-table-container">
+                            <table>
+                                <thead>
                                     <tr>
-                                        <td colSpan="7">Nenhuma venda encontrada para o período selecionado.</td>
+                                        <th>Cliente</th>
+                                        <th>Serviços</th>
+                                        <th>Produtos</th>
+                                        <th>Valor Total</th>
+                                        <th>Valor com Comissão</th>
+                                        <th>Método de Pagamento</th>
+                                        <th>Ações</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                        <button onClick={closeSalesDetailsModal}>Fechar</button>
+                                </thead>
+                                <tbody>
+                                    {filteredSalesData.length > 0 ? filteredSalesData.map((sale) => (
+                                        <tr key={sale.id}>
+                                            <td>{sale.event.title || "Cliente Desconhecido"}</td>
+                                            <td>
+                                                {sale.services?.map(service => (
+                                                    <div key={service.id}>
+                                                        {service.name} - Quantidade: {service.quantity} - Valor: R$ {service.price.toFixed(2)}
+                                                        <br />
+                                                        Profissional: {service.professionalName} - Valor Recebido: R$ {service.valorLiquido.toFixed(2)}
+                                                    </div>
+                                                ))}
+                                            </td>
+                                            <td>
+                                                {sale.products?.map(product => (
+                                                    <div key={product.id}>
+                                                        {product.name} - Quantidade: {product.quantity} - Valor: R$ {product.salePrice.toFixed(2)}
+                                                        <br />
+                                                        Profissional: {product.professionalName} - Valor Recebido: R$ {product.valorLiquido.toFixed(2)}
+                                                    </div>
+                                                ))}
+                                            </td>
+                                            <td>R$ {sale.totalPrice.toFixed(2)}</td>
+                                            <td>R$ {sale.netTotal.toFixed(2)}</td>
+                                            <td>{sale.paymentMethod}</td>
+                                            <td>
+                                                <button onClick={() => handleReverseSale(sale.id)} className="reverse-sale-button">Reverter Venda</button>
+                                            </td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="7">Nenhuma venda encontrada para o período selecionado.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <button onClick={calculateDetailedTotals} className="detailed-totals-button">Venda Detalhada</button>
+
+                        {detailedTotals && (
+                            <div className="payment-summary">
+                                <h3>Totais por Método de Pagamento</h3>
+                                <div className="payment-list">
+                                    {Object.entries(detailedTotals).map(([method, total]) => (
+                                        <div key={method} className="payment-row">
+                                            <span className="payment-method">{method}</span>
+                                            <span className="payment-amount">
+                                                R$ {total.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <button onClick={closeSalesDetailsModal} className="close-modal-button">Fechar</button>
                     </div>
                 </div>
             )}
