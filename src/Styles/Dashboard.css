@@ -267,7 +267,7 @@ button.agendarbotao:hover {
 }
 
 .modal-caixa .box-adjust input {
-  width: 100%;
+  width: 95%;
   padding: 10px;
   border: 1px solid #737373;
   border-radius: 5px;
@@ -380,7 +380,7 @@ button.agendarbotao:hover {
 
 @media (max-width: 480px) {
   .modal-caixa {
-    width: 90%;
+    width: 86%;
     padding: 20px;
   }
 
@@ -783,4 +783,223 @@ button.agendarbotao:hover {
   .payment-amount {
       font-size: 14px;
   }
+}
+
+/* modal das vendas detalhadas*/
+.sales-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.sales-modal-container {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-width: 1500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #fff;
+}
+
+.sales-modal-title {
+  margin: 0;
+  padding-bottom: 20px;
+  font-size: 1.5rem;
+  color: #fff;
+}
+
+/* Filter Section */
+.sales-filter-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.sales-filter-button {
+  padding: 8px 16px;
+  background-color: #8B0000;
+  border: 1px solid #700000;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+}
+
+.sales-filter-button:hover {
+  background-color: #660000;
+}
+
+/* Table Styles */
+.sales-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.sales-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background-color: #222;
+}
+
+.sales-details-table th,
+.sales-details-table td {
+  border: 1px solid #333;
+  padding: 12px;
+  text-align: left;
+  color: #fff;
+}
+
+.sales-details-table th {
+  background-color: #2c2c2c;
+  font-weight: bold;
+}
+
+.sales-services-cell,
+.sales-products-cell {
+  min-width: 300px;
+}
+
+.sales-service-item,
+.sales-product-item {
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.sales-service-name,
+.sales-product-name {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.sales-service-details,
+.sales-product-details {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.sales-professional-info {
+  border-top: 1px solid #333;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.sales-professional-info div {
+  margin-bottom: 4px;
+}
+
+.sales-price-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sales-reverse-button {
+  background-color: #8B0000;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sales-reverse-button:hover {
+  background-color: #660000;
+}
+
+.sales-no-data {
+  text-align: center;
+  color: #ccc;
+  padding: 20px;
+}
+
+.sales-details-table tr:hover {
+  background-color: #2a2a2a;
+}
+
+/* Payment Summary */
+.sales-payment-summary {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+.sales-summary-title {
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.sales-payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sales-payment-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background-color: #333;
+  border-radius: 4px;
+}
+
+.sales-payment-method {
+  font-weight: 500;
+  color: #fff;
+}
+
+.sales-payment-amount {
+  font-family: monospace;
+  color: #fff;
+  font-size: larger
+}
+
+/* Buttons */
+.sales-details-button,
+.sales-close-button {
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  margin-top: 16px;
+  transition: background-color 0.2s;
+}
+
+.sales-details-button {
+  background-color: #8B0000;
+  color: white;
+  margin-right: 10px;
+}
+
+.sales-details-button:hover {
+  background-color: #660000;
+}
+
+.sales-close-button {
+  background-color: #333;
+  color: white;
+}
+
+.sales-close-button:hover {
+  background-color: #444;
 }

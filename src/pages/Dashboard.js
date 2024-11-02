@@ -130,6 +130,7 @@ const Dashboard = () => {
 
     const handleReverseSale = async (saleId) => {
         try {
+            // Busca a venda pelo ID
             const saleDoc = await getDoc(doc(db, "vendas", saleId));
             if (!saleDoc.exists()) {
                 setErrorMessage("Venda não encontrada.");
@@ -138,7 +139,10 @@ const Dashboard = () => {
 
             const saleData = saleDoc.data();
 
-            // Reverter o estoque dos produtos e atualizar o saldo dos profissionais
+            // Verifica se a venda foi feita com máquina do colaborador
+            const isMachineSale = saleData.paymentMethod === "Máquina do Colaborador";  // ajuste para verificar exatamente a string correta
+
+            // Reverter o estoque dos produtos
             for (const product of saleData.products) {
                 const productRef = doc(db, "products", product.id);
                 const productDoc = await getDoc(productRef);
@@ -168,25 +172,38 @@ const Dashboard = () => {
             const boxData = boxDoc.data();
             const professionalsData = boxData.professionals || [];
 
+            // Processar serviços para ajustar saldos dos profissionais
             saleData.services.forEach(service => {
                 const professionalIndex = professionalsData.findIndex(p => p.id === service.professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
-                    professional.balance -= service.valorLiquido;
+
+                    // Usa o valor correto dependendo do tipo de venda
+                    const valorParaReverter = isMachineSale ? service.valorSemComissao : service.valorLiquido;
+
+                    professional.balance -= valorParaReverter;
                     professional.originalSaleValue -= service.originalSaleValue;
                 }
             });
 
+            // Processar produtos para ajustar saldos dos profissionais
             saleData.products.forEach(product => {
                 const professionalIndex = professionalsData.findIndex(p => p.id === product.professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
-                    professional.balance -= product.valorLiquido;
+
+                    // Usa o valor correto dependendo do tipo de venda
+                    const valorParaReverter = isMachineSale ? product.valorSemComissao : product.valorLiquido;
+
+                    professional.balance -= valorParaReverter;
                     professional.originalSaleValue -= product.originalSaleValue;
                 }
             });
 
+            // Atualiza o documento do caixa com os novos dados dos profissionais
             await updateDoc(boxDoc.ref, { professionals: professionalsData });
+
+            // Remove a venda da coleção "vendas"
             await deleteDoc(doc(db, "vendas", saleId));
 
             // Define a mensagem de sucesso
@@ -201,6 +218,7 @@ const Dashboard = () => {
             setErrorMessage("Erro ao reverter a venda.");
         }
     };
+
 
 
 
@@ -1239,37 +1257,65 @@ const Dashboard = () => {
             )}
 
             {modalOpenBoxesOpen && (
-                <div className="modal-overlay-vendas" onClick={closeOpenBoxesModal}>
-                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <h2 style={{ margin: '0', paddingRight: '20px' }}>Caixas Abertos</h2>
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                                <button onClick={() => setFilter('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Caixas da Semana</button>
-                                <button onClick={() => setFilter('month')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Caixas do Mês</button>
-                                <button onClick={() => setFilter('all')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Todos os Caixas</button>
-                            </div>
+                <div className="sales-modal-overlay" onClick={closeOpenBoxesModal}>
+                    <div className="sales-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="sales-modal-title">Caixas Abertos</h2>
+
+                        <div className="sales-filter-section">
+                            <button
+                                onClick={() => setFilter('week')}
+                                className="sales-filter-button">
+                                Caixas da Semana
+                            </button>
+                            <button
+                                onClick={() => setFilter('month')}
+                                className="sales-filter-button">
+                                Caixas do Mês
+                            </button>
+                            <button
+                                onClick={() => setFilter('all')}
+                                className="sales-filter-button">
+                                Todos os Caixas
+                            </button>
                         </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Nome do Profissional</th>
-                                    <th>Saldo</th>
-                                    <th>Total do Caixa no Dia</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredBoxes.map((box, index) => (
-                                    <tr key={index}>
-                                        <td>{box.date}</td>
-                                        <td>{box.name}</td>
-                                        <td>R$ {box.balance.toFixed(2)}</td>
-                                        <td>R$ {box.totalAmount.toFixed(2)}</td>
+
+                        <div className="sales-table-wrapper">
+                            <table className="sales-details-table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Nome do Profissional</th>
+                                        <th>Saldo</th>
+                                        <th>Total do Caixa no Dia</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <button onClick={closeOpenBoxesModal}>Fechar</button>
+                                </thead>
+                                <tbody>
+                                    {filteredBoxes.length > 0 ? (
+                                        [...filteredBoxes]
+                                            .sort((a, b) => new Date(b.date) - new Date(a.date)) // Ordena as datas em ordem decrescente
+                                            .map((box, index) => (
+                                                <tr key={index}>
+                                                    <td className="sales-date-cell">{box.date}</td>
+                                                    <td className="sales-client-cell">{box.name}</td>
+                                                    <td className="sales-price-cell">R$ {box.balance.toFixed(2)}</td>
+                                                    <td className="sales-price-cell">R$ {box.totalAmount.toFixed(2)}</td>
+                                                </tr>
+                                            ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="sales-no-data">
+                                                Nenhum caixa encontrado.
+                                            </td>
+                                        </tr>
+                                    )}
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <button onClick={closeOpenBoxesModal} className="sales-close-button">
+                            Fechar
+                        </button>
                     </div>
                 </div>
             )}
@@ -1300,57 +1346,81 @@ const Dashboard = () => {
             )}
 
             {modalProfessionalBalancesOpen && (
-                <div className="modal-overlay-vendas" onClick={closeProfessionalBalancesModal}>
-                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <h2 style={{ margin: '0', paddingBottom: '20px' }}>Saldos</h2>
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                                <button onClick={() => handleFilterChange('week')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Saldos da Semana</button>
-                                <button onClick={() => handleFilterChange('month')} style={{ backgroundColor: '#1E3A8A', color: '#FFFFFF' }}>Saldos do Mês</button>
-                            </div>
+                <div className="sales-modal-overlay" onClick={closeProfessionalBalancesModal}>
+                    <div className="sales-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="sales-modal-title">Saldos</h2>
+
+                        <div className="sales-filter-section">
+                            <button
+                                onClick={() => handleFilterChange('week')}
+                                className="sales-filter-button">
+                                Saldos da Semana
+                            </button>
+                            <button
+                                onClick={() => handleFilterChange('month')}
+                                className="sales-filter-button">
+                                Saldos do Mês
+                            </button>
                         </div>
+
                         {loading ? (
-                            <p>Carregando saldos...</p>
+                            <p className="sales-loading">Carregando saldos...</p>
                         ) : (
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Nome</th>
-                                        <th>Saldo com Comissão</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {balances.length > 0 ? (
-                                        balances.map((prof) => (
-                                            <tr key={prof.id}>
-                                                <td>{prof.name}</td>
-                                                <td>R$ {prof.balance.toFixed(2)}</td>
-                                            </tr>
-                                        ))
-                                    ) : (
+                            <div className="sales-table-wrapper">
+                                <table className="sales-details-table">
+                                    <thead>
                                         <tr>
-                                            <td colSpan="2">Nenhum saldo encontrado.</td>
+                                            <th>Nome</th>
+                                            <th>Saldo com Comissão</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {balances.length > 0 ? (
+                                            balances.map((prof) => (
+                                                <tr key={prof.id}>
+                                                    <td className="sales-client-cell">{prof.name}</td>
+                                                    <td className="sales-price-cell">
+                                                        R$ {prof.balance.toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="2" className="sales-no-data">
+                                                    Nenhum saldo encontrado.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
-                        <button onClick={closeProfessionalBalancesModal}> Fechar </button>
+
+                        <button onClick={closeProfessionalBalancesModal} className="sales-close-button">
+                            Fechar
+                        </button>
                     </div>
                 </div>
             )}
             {modalSalesDetailsOpen && (
-                <div className="modal-overlay-vendas" onClick={closeSalesDetailsModal}>
-                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <h2 style={{ margin: '0', paddingBottom: '20px' }}>Vendas</h2>
-                        <div className="sales-filter-buttons" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                            <button onClick={() => filterSalesByPeriod('day')} className="filter-button">Vendas do Dia</button>
-                            <button onClick={() => filterSalesByPeriod('week')} className="filter-button">Vendas da Semana</button>
-                            <button onClick={() => filterSalesByPeriod('month')} className="filter-button">Vendas do Mês</button>
+                <div className="sales-modal-overlay" onClick={closeSalesDetailsModal}>
+                    <div className="sales-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="sales-modal-title">Vendas</h2>
+
+                        <div className="sales-filter-section">
+                            <button onClick={() => filterSalesByPeriod('day')} className="sales-filter-button">
+                                Vendas do Dia
+                            </button>
+                            <button onClick={() => filterSalesByPeriod('week')} className="sales-filter-button">
+                                Vendas da Semana
+                            </button>
+                            <button onClick={() => filterSalesByPeriod('month')} className="sales-filter-button">
+                                Vendas do Mês
+                            </button>
                         </div>
 
-                        <div className="sales-table-container">
-                            <table>
+                        <div className="sales-table-wrapper">
+                            <table className="sales-details-table">
                                 <thead>
                                     <tr>
                                         <th>Cliente</th>
@@ -1363,53 +1433,88 @@ const Dashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredSalesData.length > 0 ? filteredSalesData.map((sale) => (
-                                        <tr key={sale.id}>
-                                            <td>{sale.event.title || "Cliente Desconhecido"}</td>
-                                            <td>
-                                                {sale.services?.map(service => (
-                                                    <div key={service.id}>
-                                                        {service.name} - Quantidade: {service.quantity} - Valor: R$ {service.price.toFixed(2)}
-                                                        <br />
-                                                        Profissional: {service.professionalName} - Valor Recebido: R$ {service.valorLiquido.toFixed(2)}
-                                                    </div>
-                                                ))}
-                                            </td>
-                                            <td>
-                                                {sale.products?.map(product => (
-                                                    <div key={product.id}>
-                                                        {product.name} - Quantidade: {product.quantity} - Valor: R$ {product.salePrice.toFixed(2)}
-                                                        <br />
-                                                        Profissional: {product.professionalName} - Valor Recebido: R$ {product.valorLiquido.toFixed(2)}
-                                                    </div>
-                                                ))}
-                                            </td>
-                                            <td>R$ {sale.totalPrice.toFixed(2)}</td>
-                                            <td>R$ {sale.netTotal.toFixed(2)}</td>
-                                            <td>{sale.paymentMethod}</td>
-                                            <td>
-                                                <button onClick={() => handleReverseSale(sale.id)} className="reverse-sale-button">Reverter Venda</button>
-                                            </td>
-                                        </tr>
-                                    )) : (
+                                    {filteredSalesData.length > 0 ? (
+                                        filteredSalesData.map((sale) => (
+                                            <tr key={sale.id}>
+                                                <td className="sales-client-cell">
+                                                    {sale.event.title || "Cliente Desconhecido"}
+                                                </td>
+                                                <td className="sales-services-cell">
+                                                    {sale.services?.map(service => (
+                                                        <div key={service.id} className="sales-service-item">
+                                                            <div className="sales-service-name">
+                                                                {service.name}
+                                                            </div>
+                                                            <div className="sales-service-details">
+                                                                <span>Quantidade: {service.quantity}</span>
+                                                                <span>Valor: R$ {service.price.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="sales-professional-info">
+                                                                <div>Profissional: {service.professionalName}</div>
+                                                                <div>Valor Recebido: R$ {service.valorLiquido.toFixed(2)}</div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </td>
+                                                <td className="sales-products-cell">
+                                                    {sale.products?.map(product => (
+                                                        <div key={product.id} className="sales-product-item">
+                                                            <div className="sales-product-name">
+                                                                {product.name}
+                                                            </div>
+                                                            <div className="sales-product-details">
+                                                                <span>Quantidade: {product.quantity}</span>
+                                                                <span>Valor: R$ {product.salePrice.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="sales-professional-info">
+                                                                <div>Profissional: {product.professionalName}</div>
+                                                                <div>Valor Recebido: R$ {product.valorLiquido.toFixed(2)}</div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </td>
+                                                <td className="sales-price-cell">
+                                                    R$ {sale.totalPrice.toFixed(2)}
+                                                </td>
+                                                <td className="sales-price-cell">
+                                                    R$ {sale.netTotal.toFixed(2)}
+                                                </td>
+                                                <td className="sales-payment-cell">
+                                                    {sale.paymentMethod}
+                                                </td>
+                                                <td className="sales-actions-cell">
+                                                    <button
+                                                        onClick={() => handleReverseSale(sale.id)}
+                                                        className="sales-reverse-button"
+                                                    >
+                                                        Reverter Venda
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
                                         <tr>
-                                            <td colSpan="7">Nenhuma venda encontrada para o período selecionado.</td>
+                                            <td colSpan="7" className="sales-no-data">
+                                                Nenhuma venda encontrada para o período selecionado.
+                                            </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
 
-                        <button onClick={calculateDetailedTotals} className="detailed-totals-button">Venda Detalhada</button>
+                        <button onClick={calculateDetailedTotals} className="sales-details-button">
+                            Venda Detalhada
+                        </button>
 
                         {detailedTotals && (
-                            <div className="payment-summary">
-                                <h3>Totais por Método de Pagamento</h3>
-                                <div className="payment-list">
+                            <div className="sales-payment-summary">
+                                <h3 className="sales-summary-title">Totais por Método de Pagamento</h3>
+                                <div className="sales-payment-list">
                                     {Object.entries(detailedTotals).map(([method, total]) => (
-                                        <div key={method} className="payment-row">
-                                            <span className="payment-method">{method}</span>
-                                            <span className="payment-amount">
+                                        <div key={method} className="sales-payment-row">
+                                            <span className="sales-payment-method">{method}</span>
+                                            <span className="sales-payment-amount">
                                                 R$ {total.toFixed(2)}
                                             </span>
                                         </div>
@@ -1418,7 +1523,9 @@ const Dashboard = () => {
                             </div>
                         )}
 
-                        <button onClick={closeSalesDetailsModal} className="close-modal-button">Fechar</button>
+                        <button onClick={closeSalesDetailsModal} className="sales-close-button">
+                            Fechar
+                        </button>
                     </div>
                 </div>
             )}
