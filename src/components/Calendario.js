@@ -316,8 +316,8 @@ const CompletionForm = ({ selectedEvent, professionals, paymentMethods, onComple
 
             const professionalBalances = {};
 
-            // Processamento de saldo com lógica de desvio de comissão para o ID de "Lucas"
-            const lucasId = "MI4K0IIjF0hcPuv5w3Gz";
+            // fiz uma puta baianagem aqui mas funciona pelo menos, se quiser que o saldo da maquina do colaborador seja o mesmo que o do lucas, basta tirar o XXX*
+            const lucasId = "MI4K0IIjF0hcPuv5w3GzXXX";
 
             processedServices.forEach(service => {
                 const targetProfessionalId = selectedPaymentMethod === "Máquina do Colaborador" ? lucasId : service.professionalId;
