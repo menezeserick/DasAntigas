@@ -11,7 +11,6 @@
   max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease-in-out;
   opacity: 0;
   visibility: hidden;
   transform: translate(-50%, -50%) scale(0.9);

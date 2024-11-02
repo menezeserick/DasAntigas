@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import debounce from 'lodash.debounce';
 import Calendario from '../components/Calendario';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -140,7 +141,7 @@ const Dashboard = () => {
             const saleData = saleDoc.data();
 
             // Verifica se a venda foi feita com máquina do colaborador
-            const isMachineSale = saleData.paymentMethod === "Máquina do Colaborador";  // ajuste para verificar exatamente a string correta
+            const isMachineSale = saleData.paymentMethod === "Máquina do Colaborador";
 
             // Reverter o estoque dos produtos
             for (const product of saleData.products) {
@@ -152,19 +153,15 @@ const Dashboard = () => {
                 await updateDoc(productRef, { stock: newStock });
             }
 
-            // Reverte os saldos dos profissionais no caixa
-            const todayDate = new Date().toLocaleDateString('pt-BR', {
-                timeZone: 'America/Sao_Paulo',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-            }).split('/').reverse().join('-');
+            // Extraí a data da venda
+            const saleDate = saleData.date; // Certifique-se de que `date` está no formato 'YYYY-MM-DD'
 
-            const q = query(collection(db, "boxes"), where("date", "==", todayDate));
+            // Busca o caixa da data da venda
+            const q = query(collection(db, "boxes"), where("date", "==", saleDate));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                console.error(`Nenhum caixa encontrado para a data: ${todayDate}`);
+                console.error(`Nenhum caixa encontrado para a data: ${saleDate}`);
                 return;
             }
 
@@ -177,10 +174,9 @@ const Dashboard = () => {
                 const professionalIndex = professionalsData.findIndex(p => p.id === service.professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
-
-                    // Usa o valor correto dependendo do tipo de venda
                     const valorParaReverter = isMachineSale ? service.valorSemComissao : service.valorLiquido;
 
+                    // Ajusta o saldo
                     professional.balance -= valorParaReverter;
                     professional.originalSaleValue -= service.originalSaleValue;
                 }
@@ -191,10 +187,9 @@ const Dashboard = () => {
                 const professionalIndex = professionalsData.findIndex(p => p.id === product.professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
-
-                    // Usa o valor correto dependendo do tipo de venda
                     const valorParaReverter = isMachineSale ? product.valorSemComissao : product.valorLiquido;
 
+                    // Ajusta o saldo
                     professional.balance -= valorParaReverter;
                     professional.originalSaleValue -= product.originalSaleValue;
                 }
@@ -218,9 +213,6 @@ const Dashboard = () => {
             setErrorMessage("Erro ao reverter a venda.");
         }
     };
-
-
-
 
     const fetchBalances = async (start, end) => {
         try {
@@ -685,14 +677,28 @@ const Dashboard = () => {
         setAdjustmentValue(e.target.value);
     };
 
-    const handleFormInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
-    };
+    const debouncedHandleFormInputChange = useCallback(
+        debounce((name, value) => {
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: value,
+            }));
+        }, 300), // Shortened debounce time
+        []
+    );
 
+    const handleFormInputChange = (event) => {
+        const { name, value } = event.target;
+
+        if (name === "clientName") { // Only debounce for text input
+            debouncedHandleFormInputChange(name, value);
+        } else { // Immediate update for select inputs
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: value,
+            }));
+        }
+    };
     const handleAddTime = () => {
         if (!formData.time) return;
 
@@ -1434,64 +1440,66 @@ const Dashboard = () => {
                                 </thead>
                                 <tbody>
                                     {filteredSalesData.length > 0 ? (
-                                        filteredSalesData.map((sale) => (
-                                            <tr key={sale.id}>
-                                                <td className="sales-client-cell">
-                                                    {sale.event.title || "Cliente Desconhecido"}
-                                                </td>
-                                                <td className="sales-services-cell">
-                                                    {sale.services?.map(service => (
-                                                        <div key={service.id} className="sales-service-item">
-                                                            <div className="sales-service-name">
-                                                                {service.name}
+                                        filteredSalesData
+                                            .sort((a, b) => new Date(a.date) - new Date(b.date)) // Ordena as vendas pela data e hora
+                                            .map((sale) => (
+                                                <tr key={sale.id}>
+                                                    <td className="sales-client-cell">
+                                                        {sale.event.title || "Cliente Desconhecido"}
+                                                    </td>
+                                                    <td className="sales-services-cell">
+                                                        {sale.services?.map(service => (
+                                                            <div key={service.id} className="sales-service-item">
+                                                                <div className="sales-service-name">
+                                                                    {service.name}
+                                                                </div>
+                                                                <div className="sales-service-details">
+                                                                    <span>Quantidade: {service.quantity}</span>
+                                                                    <span>Valor: R$ {service.price.toFixed(2)}</span>
+                                                                </div>
+                                                                <div className="sales-professional-info">
+                                                                    <div>Profissional: {service.professionalName}</div>
+                                                                    <div>Valor Recebido: R$ {service.valorLiquido.toFixed(2)}</div>
+                                                                </div>
                                                             </div>
-                                                            <div className="sales-service-details">
-                                                                <span>Quantidade: {service.quantity}</span>
-                                                                <span>Valor: R$ {service.price.toFixed(2)}</span>
+                                                        ))}
+                                                    </td>
+                                                    <td className="sales-products-cell">
+                                                        {sale.products?.map(product => (
+                                                            <div key={product.id} className="sales-product-item">
+                                                                <div className="sales-product-name">
+                                                                    {product.name}
+                                                                </div>
+                                                                <div className="sales-product-details">
+                                                                    <span>Quantidade: {product.quantity}</span>
+                                                                    <span>Valor: R$ {product.salePrice.toFixed(2)}</span>
+                                                                </div>
+                                                                <div className="sales-professional-info">
+                                                                    <div>Profissional: {product.professionalName}</div>
+                                                                    <div>Valor Recebido: R$ {product.valorLiquido.toFixed(2)}</div>
+                                                                </div>
                                                             </div>
-                                                            <div className="sales-professional-info">
-                                                                <div>Profissional: {service.professionalName}</div>
-                                                                <div>Valor Recebido: R$ {service.valorLiquido.toFixed(2)}</div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </td>
-                                                <td className="sales-products-cell">
-                                                    {sale.products?.map(product => (
-                                                        <div key={product.id} className="sales-product-item">
-                                                            <div className="sales-product-name">
-                                                                {product.name}
-                                                            </div>
-                                                            <div className="sales-product-details">
-                                                                <span>Quantidade: {product.quantity}</span>
-                                                                <span>Valor: R$ {product.salePrice.toFixed(2)}</span>
-                                                            </div>
-                                                            <div className="sales-professional-info">
-                                                                <div>Profissional: {product.professionalName}</div>
-                                                                <div>Valor Recebido: R$ {product.valorLiquido.toFixed(2)}</div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </td>
-                                                <td className="sales-price-cell">
-                                                    R$ {sale.totalPrice.toFixed(2)}
-                                                </td>
-                                                <td className="sales-price-cell">
-                                                    R$ {sale.netTotal.toFixed(2)}
-                                                </td>
-                                                <td className="sales-payment-cell">
-                                                    {sale.paymentMethod}
-                                                </td>
-                                                <td className="sales-actions-cell">
-                                                    <button
-                                                        onClick={() => handleReverseSale(sale.id)}
-                                                        className="sales-reverse-button"
-                                                    >
-                                                        Reverter Venda
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
+                                                        ))}
+                                                    </td>
+                                                    <td className="sales-price-cell">
+                                                        R$ {sale.totalPrice.toFixed(2)}
+                                                    </td>
+                                                    <td className="sales-price-cell">
+                                                        R$ {sale.netTotal.toFixed(2)}
+                                                    </td>
+                                                    <td className="sales-payment-cell">
+                                                        {sale.paymentMethod}
+                                                    </td>
+                                                    <td className="sales-actions-cell">
+                                                        <button
+                                                            onClick={() => handleReverseSale(sale.id)}
+                                                            className="sales-reverse-button"
+                                                        >
+                                                            Reverter Venda
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
                                     ) : (
                                         <tr>
                                             <td colSpan="7" className="sales-no-data">
