@@ -1016,45 +1016,45 @@ const Dashboard = () => {
 
 
             {isModalServiceDetailsOpen && (
-                <div className="modal-overlay-vendas" onClick={closeServiceDetailsModal}>
-                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <h2>Serviços</h2>
+                <div className="sales-modal-overlay" onClick={closeServiceDetailsModal}>
+                    <div className="sales-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="sales-modal-title">Serviços</h2>
                         {serviceData && serviceData.length > 0 ? (
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Nome do Serviço</th>
-                                        <th>Preço</th>
-                                        <th>Preço de Custo</th> {/* Nova coluna para o preço de custo */}
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {serviceData
-                                        .slice() // Cria uma cópia para evitar mutação do array original
-                                        .sort((a, b) => a.name.localeCompare(b.name)) // Ordena os serviços pelo nome
-                                        .map((services) => (
-                                            <tr key={services.id}>
-                                                <td>{services.name}</td>
-                                                <td>{Number.isFinite(services.price) ? `R$ ${services.price.toFixed(2)}` : 'N/A'}</td>
-                                                <td>{Number.isFinite(services.costPrice) ? `R$ ${services.costPrice.toFixed(2)}` : 'N/A'}</td> {/* Exibe o preço de custo */}
-                                                <td>
-                                                    <FaEdit onClick={() => handleEditService(services)} style={{ cursor: 'pointer', marginRight: '10px' }} />
-                                                    <FaTrash onClick={() => handleDeleteService(services.id)} style={{ cursor: 'pointer', color: 'red' }} />
-                                                </td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
+                            <div className="sales-table-wrapper">
+                                <table className="sales-details-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome do Serviço</th>
+                                            <th>Preço</th>
+                                            <th>Preço de Custo</th> {/* Nova coluna para o preço de custo */}
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {serviceData
+                                            .slice() // Cria uma cópia para evitar mutação do array original
+                                            .sort((a, b) => a.name.localeCompare(b.name)) // Ordena os serviços pelo nome
+                                            .map((services) => (
+                                                <tr key={services.id}>
+                                                    <td>{services.name}</td>
+                                                    <td>{Number.isFinite(services.price) ? `R$ ${services.price.toFixed(2)}` : 'N/A'}</td>
+                                                    <td>{Number.isFinite(services.costPrice) ? `R$ ${services.costPrice.toFixed(2)}` : 'N/A'}</td> {/* Exibe o preço de custo */}
+                                                    <td>
+                                                        <FaEdit onClick={() => handleEditService(services)} style={{ cursor: 'pointer', marginRight: '10px' }} />
+                                                        <FaTrash onClick={() => handleDeleteService(services.id)} style={{ cursor: 'pointer', color: 'red' }} />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         ) : (
-                            <p>Nenhum dado de serviços disponível.</p>
+                            <p className="sales-no-data">Nenhum dado de serviços disponível.</p>
                         )}
-                        <button onClick={closeServiceDetailsModal}>Fechar</button>
+                        <button className="sales-close-button" onClick={closeServiceDetailsModal}>Fechar</button>
                     </div>
                 </div>
             )}
-
-
             {isEditServiceModalOpen && (
                 <div className="modal-overlay modal-overlay-open" onClick={(e) => {
                     if (e.target === e.currentTarget) {
@@ -1139,43 +1139,44 @@ const Dashboard = () => {
             )}
 
             {isModalStockDetailsOpen && (
-                <div className="modal-overlay-vendas" onClick={closeStockDetailsModal}>
-                    <div className="modal-vendas" onClick={(e) => e.stopPropagation()}>
-                        <h2>Estoque de Produtos</h2>
+                <div className="sales-modal-overlay" onClick={closeStockDetailsModal}>
+                    <div className="sales-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="sales-modal-title">Estoque de Produtos</h2>
                         {stockData && stockData.length > 0 ? (
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Nome do Produto</th>
-                                        <th>Preço de Venda</th>
-                                        <th>Preço de Custo</th>
-                                        <th>Estoque Disponível</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {stockData.map((product) => (
-                                        <tr key={product.id}>
-                                            <td>{product.name}</td>
-                                            <td>{Number.isFinite(product.salePrice) ? `R$ ${product.salePrice.toFixed(2)}` : 'N/A'}</td>
-                                            <td>{Number.isFinite(product.costPrice) ? `R$ ${product.costPrice.toFixed(2)}` : 'N/A'}</td>
-                                            <td>{Number.isFinite(product.stock) ? product.stock : '-'}</td>
-                                            <td>
-                                                <FaEdit onClick={() => handleEditProduct(product)} style={{ cursor: 'pointer', marginRight: '10px' }} />
-                                                <FaTrash onClick={() => handleDeleteProduct(product.id)} style={{ cursor: 'pointer', color: 'red' }} />
-                                            </td>
+                            <div className="sales-table-wrapper">
+                                <table className="sales-details-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome do Produto</th>
+                                            <th>Preço de Venda</th>
+                                            <th>Preço de Custo</th>
+                                            <th>Estoque Disponível</th>
+                                            <th>Ações</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {stockData.map((product) => (
+                                            <tr key={product.id}>
+                                                <td>{product.name}</td>
+                                                <td>{Number.isFinite(product.salePrice) ? `R$ ${product.salePrice.toFixed(2)}` : 'N/A'}</td>
+                                                <td>{Number.isFinite(product.costPrice) ? `R$ ${product.costPrice.toFixed(2)}` : 'N/A'}</td>
+                                                <td>{Number.isFinite(product.stock) ? product.stock : '-'}</td>
+                                                <td>
+                                                    <FaEdit onClick={() => handleEditProduct(product)} style={{ cursor: 'pointer', marginRight: '10px' }} />
+                                                    <FaTrash onClick={() => handleDeleteProduct(product.id)} style={{ cursor: 'pointer', color: 'red' }} />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         ) : (
-                            <p>Nenhum dado de estoque disponível.</p>
+                            <p className="sales-no-data">Nenhum dado de estoque disponível.</p>
                         )}
-                        <button onClick={closeStockDetailsModal}>Fechar</button>
+                        <button className="sales-close-button" onClick={closeStockDetailsModal}>Fechar</button>
                     </div>
                 </div>
             )}
-
             {isEditProductModalOpen && (
                 <div className="modal-overlay modal-overlay-open" onClick={() => setEditProductModalOpen(false)}>
                     <div className="modal modal-open" onClick={(e) => e.stopPropagation()}>

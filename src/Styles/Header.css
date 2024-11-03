@@ -72,7 +72,7 @@ body {
         display: none;
         position: absolute;
         top: 60px;
-        right: 20px;
+        right: 4px;
         flex-direction: column;
         gap: 10px;
         background-color: #333;
