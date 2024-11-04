@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import debounce from 'lodash.debounce';
 import Calendario from '../components/Calendario';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, getDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import '../Styles/Dashboard.css';
 import moment from 'moment-timezone';
@@ -10,6 +10,7 @@ import { FaEdit, FaTrash } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { subDays, subMonths, isWithinInterval } from 'date-fns';
 import { auth } from '../firebaseConfig';
+
 
 const Dashboard = () => {
     const [events, setEvents] = useState([]);
@@ -50,6 +51,10 @@ const Dashboard = () => {
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [detailedTotals, setDetailedTotals] = useState(null);
+    const [showHistory, setShowHistory] = useState(false);
+    const [historyBalances, setHistoryBalances] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyError, setHistoryError] = useState(null);
     const [formData, setFormData] = useState({
         clientName: '',
         title: '',
@@ -87,6 +92,43 @@ const Dashboard = () => {
     const closeProfessionalBalancesModal = () => setModalProfessionalBalancesOpen(false);
     const closeMonthlyBalancesModal = () => setModalMonthlyBalancesOpen(false);
     const closeOpenBoxesModal = () => setModalOpenBoxesOpen(false);
+
+    const fetchHistoryBalances = async () => {
+        setHistoryLoading(true);
+        setHistoryError(null);
+
+        try {
+            const querySnapshot = await getDocs(collection(db, "weekly_balances"));
+            const balancesData = [];
+
+            querySnapshot.forEach((doc) => {
+                balancesData.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            if (balancesData.length === 0) {
+                setHistoryError("Nenhum saldo semanal encontrado no histórico.");
+                setHistoryBalances([]);
+            } else {
+                setHistoryBalances(balancesData);
+            }
+        } catch (error) {
+            console.error("Erro ao buscar histórico de saldos: ", error);
+            setHistoryError("Erro ao carregar o histórico de saldos. Tente novamente.");
+            setHistoryBalances([]);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const toggleHistory = () => {
+        if (!showHistory) {
+            fetchHistoryBalances();
+        }
+        setShowHistory(!showHistory);
+    };
 
     const calculateDetailedTotals = () => {
         const totals = {};
@@ -333,6 +375,26 @@ const Dashboard = () => {
         const endOfWeek = moment().endOf('week').format('YYYY-MM-DD');
 
         try {
+            // Primeiro, verifica se já existe um registro para esta semana
+            const weeklyBalancesQuery = query(
+                collection(db, "weekly_balances"),
+                where("week_end_date", "==", endOfWeek)
+            );
+            const weeklyBalancesSnapshot = await getDocs(weeklyBalancesQuery);
+
+            // Se já existem registros para esta semana, apenas carrega os dados
+            if (!weeklyBalancesSnapshot.empty) {
+                const existingBalances = weeklyBalancesSnapshot.docs.map(doc => ({
+                    id: doc.data().professional_id,
+                    name: doc.data().name,
+                    balance: doc.data().balance
+                }));
+                setWeeklyBalances(existingBalances);
+                setModalProfessionalBalancesOpen(true);
+                return;
+            }
+
+            // Se não existem registros, calcula os novos saldos
             const boxesQuery = query(
                 collection(db, "boxes"),
                 where("date", ">=", startOfWeek),
@@ -348,6 +410,7 @@ const Dashboard = () => {
                 professionals.forEach((prof) => {
                     if (!balanceMap[prof.id]) {
                         balanceMap[prof.id] = {
+                            id: prof.id,
                             name: prof.name,
                             balance: parseFloat(prof.balance) || 0
                         };
@@ -359,13 +422,30 @@ const Dashboard = () => {
 
             const balances = Object.values(balanceMap);
 
+            // Grava os saldos no banco de dados apenas se houver dados para gravar
+            if (balances.length > 0) {
+                const batch = writeBatch(db);
+
+                balances.forEach((balance) => {
+                    const docRef = doc(collection(db, "weekly_balances"));
+                    batch.set(docRef, {
+                        professional_id: balance.id,
+                        name: balance.name,
+                        balance: balance.balance,
+                        week_end_date: endOfWeek,
+                        created_at: serverTimestamp()
+                    });
+                });
+
+                await batch.commit();
+            }
+
             setWeeklyBalances(balances);
             setModalProfessionalBalancesOpen(true);
         } catch (error) {
-            console.error("Erro ao buscar os saldos dos profissionais da semana: ", error);
+            console.error("Erro ao buscar e gravar os saldos dos profissionais da semana: ", error);
         }
     };
-
 
     const handleEditProduct = (product) => {
         closeStockDetailsModal();
@@ -1368,11 +1448,16 @@ const Dashboard = () => {
                                 className="sales-filter-button">
                                 Saldos do Mês
                             </button>
+                            <button
+                                onClick={toggleHistory}
+                                className="sales-filter-button">
+                                {showHistory ? 'Ocultar Histórico' : 'Ver Histórico'}
+                            </button>
                         </div>
 
                         {loading ? (
                             <p className="sales-loading">Carregando saldos...</p>
-                        ) : (
+                        ) : !showHistory ? (
                             <div className="sales-table-wrapper">
                                 <table className="sales-details-table">
                                     <thead>
@@ -1401,8 +1486,40 @@ const Dashboard = () => {
                                     </tbody>
                                 </table>
                             </div>
+                        ) : (
+                            <div className="sales-table-wrapper">
+                                {historyLoading ? (
+                                    <p className="sales-loading">Carregando histórico...</p>
+                                ) : historyError ? (
+                                    <p className="sales-no-data">{historyError}</p>
+                                ) : (
+                                    <table className="sales-details-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Saldo</th>
+                                                <th>Semana</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {historyBalances
+                                                .sort((a, b) => new Date(a.week_end_date) - new Date(b.week_end_date)) // Ordena por data do mais antigo para o mais novo
+                                                .map((balance) => (
+                                                    <tr key={balance.id}>
+                                                        <td className="sales-client-cell">{balance.name}</td>
+                                                        <td className="sales-price-cell">
+                                                            R$ {balance.balance.toFixed(2)}
+                                                        </td>
+                                                        <td className="sales-date-cell">
+                                                            {new Date(balance.week_end_date).toLocaleDateString('pt-BR')}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
                         )}
-
                         <button onClick={closeProfessionalBalancesModal} className="sales-close-button">
                             Fechar
                         </button>
