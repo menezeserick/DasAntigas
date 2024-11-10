@@ -179,82 +179,102 @@ const Dashboard = () => {
                 setErrorMessage("Venda não encontrada.");
                 return;
             }
-
+    
             const saleData = saleDoc.data();
-
-            // Verifica se a venda foi feita com máquina do colaborador
+            console.log("Valor de saleData.event:", saleData.event); // Log para inspecionar o campo `event`
+    
+            // Verifica se o campo `event` existe e contém o campo `start`
+            if (!saleData.event || !saleData.event.start) {
+                console.error("O campo 'start' está ausente no evento.");
+                setErrorMessage("Data de início não encontrada.");
+                return;
+            }
+    
             const isMachineSale = saleData.paymentMethod === "Máquina do Colaborador";
-
+    
             // Reverter o estoque dos produtos
             for (const product of saleData.products) {
                 const productRef = doc(db, "products", product.id);
                 const productDoc = await getDoc(productRef);
                 const currentStock = productDoc.data().stock;
                 const newStock = currentStock + product.quantity;
-
+    
                 await updateDoc(productRef, { stock: newStock });
             }
-
-            // Extraí a data da venda
-            const saleDate = saleData.date; // Certifique-se de que `date` está no formato 'YYYY-MM-DD'
-
+    
+            // Converte `start` para a data caso exista e seja válida
+            let saleDate;
+            if (saleData.event.start instanceof Date) {
+                saleDate = saleData.event.start.toISOString().split('T')[0];
+            } else if (saleData.event.start && saleData.event.start.toDate) {
+                saleDate = saleData.event.start.toDate().toISOString().split('T')[0];
+            } else if (typeof saleData.event.start === "string") {
+                saleDate = new Date(saleData.event.start).toISOString().split('T')[0];
+            } else {
+                console.error("O campo 'start' não é válido:", saleData.event.start);
+                setErrorMessage("Erro ao processar a data da venda.");
+                return;
+            }
+    
             // Busca o caixa da data da venda
             const q = query(collection(db, "boxes"), where("date", "==", saleDate));
             const querySnapshot = await getDocs(q);
-
+    
             if (querySnapshot.empty) {
                 console.error(`Nenhum caixa encontrado para a data: ${saleDate}`);
                 return;
             }
-
+    
             const boxDoc = querySnapshot.docs[0];
             const boxData = boxDoc.data();
             const professionalsData = boxData.professionals || [];
-
+    
             // Processar serviços para ajustar saldos dos profissionais
             saleData.services.forEach(service => {
                 const professionalIndex = professionalsData.findIndex(p => p.id === service.professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
                     const valorParaReverter = isMachineSale ? service.valorSemComissao : service.valorLiquido;
-
+    
                     // Ajusta o saldo
                     professional.balance -= valorParaReverter;
                     professional.originalSaleValue -= service.originalSaleValue;
                 }
             });
-
+    
             // Processar produtos para ajustar saldos dos profissionais
             saleData.products.forEach(product => {
                 const professionalIndex = professionalsData.findIndex(p => p.id === product.professionalId);
                 if (professionalIndex !== -1) {
                     const professional = professionalsData[professionalIndex];
                     const valorParaReverter = isMachineSale ? product.valorSemComissao : product.valorLiquido;
-
+    
                     // Ajusta o saldo
                     professional.balance -= valorParaReverter;
                     professional.originalSaleValue -= product.originalSaleValue;
                 }
             });
-
+    
             // Atualiza o documento do caixa com os novos dados dos profissionais
             await updateDoc(boxDoc.ref, { professionals: professionalsData });
-
+    
             // Remove a venda da coleção "vendas"
             await deleteDoc(doc(db, "vendas", saleId));
-
+    
             // Define a mensagem de sucesso
             setSuccessMessage("Venda revertida com sucesso.");
             setErrorMessage("");
-
+    
             // Limpa a mensagem após 5 segundos
             setTimeout(() => setSuccessMessage(""), 5000);
-
+    
         } catch (error) {
             console.error("Erro ao reverter venda: ", error);
             setErrorMessage("Erro ao reverter a venda.");
         }
     };
+    
+    
 
     const fetchBalances = async (start, end) => {
         try {
